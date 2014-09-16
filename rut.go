@@ -27,7 +27,8 @@ type Hook func(req *ht.Request)
 
 type RouteDef struct {
 	path string
-	handler ht.HandlerFunc
+	//handler ht.HandlerFunc
+	transformer Transformer
 	name string // assumed to be same as the path if ommited?
 	guards []Guard
 	hooks []Hook
@@ -76,18 +77,23 @@ func Ward(r *mux.Route, guard Guard) {
 }
 
 func Guards(guards ...Guard) []Guard {
-	return guards
+	var reversed []Guard
+	for _, g := range guards {
+		reversed = append(reversed, g)
+	}
+	return reversed
 }
 
 func Hooks(hooks ...Hook) []Hook {
 	return hooks
 }
 
-func Route(path string, handler ht.HandlerFunc, name string, hooks []Hook,
+func Route(path string, t Transformer, name string, hooks []Hook,
 	guards []Guard, subroutes ...*RouteDef) *RouteDef {
 		r := &RouteDef{
 			path: path,
-			handler: handler,
+			//handler: handler,
+			transformer: t,
 			name: name,
 			hooks: hooks,
 			guards: guards,
@@ -99,9 +105,9 @@ func Route(path string, handler ht.HandlerFunc, name string, hooks []Hook,
 		return r
 }
 
-func SRoute(path string, handler ht.HandlerFunc,
+func SRoute(path string, t Transformer,
 	name string, subroutes ...*RouteDef) *RouteDef {
-	return Route(path, handler, name, Hooks(), Guards(), subroutes...)
+	return Route(path, t, name, Hooks(), Guards(), subroutes...)
 }
 
 func (r *RouteDef) MapRoute(f func(r *RouteDef)) *RouteDef {
@@ -132,8 +138,12 @@ func BuildRouter(routeDef *RouteDef, base *mux.Router) *mux.Router {
 	for _, g := range  routeDef.guards {
 		Ward(route, g)
 	}
+
+	//router.Handle("/", routeDef.handler)
 	router := route.Subrouter()
-	router.Handle("/", routeDef.handler)
+	t := routeDef.transformer
+	t.Transform(router.Path("/"))
+
 	for _, subroute := range  routeDef.subroutes {
 		BuildRouter(subroute, router)
 	}
@@ -172,38 +182,73 @@ func PrintRouteDef(routeDef *RouteDef) {
 	fmt.Println(routeDef.String())
 }
 
-type Transformer func(*mux.Route)
+type Transformer interface {
+	Transform(*mux.Route)
+}
+
+type TransformerFunc func(*mux.Route)
+
+type Ts []Transformer
 
 type M map[ht.Handler]Transformer
 
-func Methods(methods ...string) Transformer {
-	return func(r *mux.Route) {
-		r.Methods(methods...)
+
+func (m M) Transform(r *mux.Route) {
+	for handler, t := range m {
+		r.Handler(handler)
+		t.Transform(r)
 	}
+}
+
+func (ts Ts) Transform(r *mux.Route) {
+	sub := r.Subrouter()
+	sub.StrictSlash(true)
+	for _, t := range ts {
+		//sub := r.Subrouter().StrictSlash(true).Path("/")
+		t.Transform(sub.Path("/"))
+	}
+}
+
+func (transform TransformerFunc) Transform(r *mux.Route) {
+	transform(r)
+}
+
+func H(handler ht.HandlerFunc) Transformer {
+	return TransformerFunc(func(r *mux.Route) {
+		r.HandlerFunc(handler)
+	})
 }
 
 func Schemes(schemes ...string) Transformer {
-	return func(r *mux.Route) {
+	return TransformerFunc(func(r *mux.Route) {
 		r.Schemes(schemes...)
-	}
+	})
 }
 
 func Headers(pairs ...string) Transformer {
-	return func(r *mux.Route) {
+	return TransformerFunc(func(r *mux.Route) {
 		r.Headers(pairs...)
-	}
+	})
 }
 
-func GET(r *mux.Route) { r.Methods("GET") }
-func POST(r *mux.Route) { r.Methods("POST") }
+func Methods(methods ...string) Transformer {
+	return TransformerFunc(func(r *mux.Route) {
+		r.Methods(methods...)
+	})
+}
 
 func Group(transformers ...Transformer) Transformer {
-	return func(r *mux.Route) {
-		for _, transform := range transformers {
-			transform(r)
+	var f TransformerFunc
+	f = func(r *mux.Route) {
+		for _, t := range transformers {
+			t.Transform(r)
 		}
 	}
+	return f
 }
+
+var GET = TransformerFunc(func(r *mux.Route) {  r.Methods("GET") })
+var POST = TransformerFunc(func(r *mux.Route) { r.Methods("POST") })
 
 func combine(h1 ht.Handler, h2 ht.Handler) ht.Handler{
 	if h1 == nil { return h2 }
@@ -224,8 +269,6 @@ func combine(h1 ht.Handler, h2 ht.Handler) ht.Handler{
 //	}
 //	return sortie
 //}
-
-
 
 
 
