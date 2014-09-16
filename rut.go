@@ -172,11 +172,37 @@ func PrintRouteDef(routeDef *RouteDef) {
 	fmt.Println(routeDef.String())
 }
 
+type Transformer func(*mux.Route)
 
-func rootRouter() *mux.Router {
-	root := mux.NewRouter()
-	root.StrictSlash(true)
-	return root
+type M map[ht.Handler]Transformer
+
+func Methods(methods ...string) Transformer {
+	return func(r *mux.Route) {
+		r.Methods(methods...)
+	}
+}
+
+func Schemes(schemes ...string) Transformer {
+	return func(r *mux.Route) {
+		r.Schemes(schemes...)
+	}
+}
+
+func Headers(pairs ...string) Transformer {
+	return func(r *mux.Route) {
+		r.Headers(pairs...)
+	}
+}
+
+func GET(r *mux.Route) { r.Methods("GET") }
+func POST(r *mux.Route) { r.Methods("POST") }
+
+func Group(transformers ...Transformer) Transformer {
+	return func(r *mux.Route) {
+		for _, transform := range transformers {
+			transform(r)
+		}
+	}
 }
 
 func combine(h1 ht.Handler, h2 ht.Handler) ht.Handler{
@@ -188,6 +214,7 @@ func combine(h1 ht.Handler, h2 ht.Handler) ht.Handler{
 	})
 }
 
+
 //var GhostGuard = Guard { Reject: false }
 
 //func Sortie(guards []Guard) Guard {
@@ -197,4 +224,9 @@ func combine(h1 ht.Handler, h2 ht.Handler) ht.Handler{
 //	}
 //	return sortie
 //}
+
+
+
+
+
 
