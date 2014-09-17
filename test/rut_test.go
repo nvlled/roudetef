@@ -10,7 +10,7 @@ import (
 	"net/http/cookiejar"
 	//"github.com/gorilla/mux"
 	"io/ioutil"
-	"fmt"
+	//"fmt"
 	//"strings"
 	//"path/filepath"
 )
@@ -23,6 +23,7 @@ func TestPaths(t *testing.T) {
 		rut.Entry{"login-path",		"/login"},
 		rut.Entry{"logout-path",	"/logout"},
 		rut.Entry{"broke-path",		"/broke"},
+		rut.Entry{"submit-path",	"/submit"},
 		rut.Entry{"a-path",			"/a"},
 		rut.Entry{"b-path",			"/a/b"},
 		rut.Entry{"c-path",			"/a/b/c"},
@@ -84,6 +85,7 @@ func TestGuard(t *testing.T) {
 	if resp.StatusCode != http.StatusOK { t.Fail() }
 	resp,_ = client.Get(server.URL+"/a/d")
 	if resp.StatusCode != http.StatusOK { t.Fail() }
+
 }
 
 func TestRouting(t *testing.T) {
@@ -111,16 +113,57 @@ func TestRouting(t *testing.T) {
 	}
 }
 
+func TestRequest(t *testing.T) {
+	root, _ := createHandler()
+	server := httptest.NewServer(root)
+	c := createClient()
+
+	resp,_ := request(c, "GET",  server.URL+"/submit/")
+	if resp.StatusCode != http.StatusOK {
+		t.Fail()
+	}
+	resp,_ = request(c, "POST",  server.URL+"/submit/")
+	if resp.StatusCode == http.StatusOK {
+		t.Fail()
+	}
+	// route requires a header "X:123"
+	resp,_ = request(c, "POST",  server.URL+"/submit/", "X", "123")
+	if resp.StatusCode != http.StatusOK {
+		t.Fail()
+	}
+}
+
 func routeNames(def *rut.RouteDef) []string {
-	var names []string
-	def.MapRoute(func(r *rut.RouteDef) {
-		names = append(names, r.Name())
-	})
-	return names
+	return []string{
+		"home-path",
+		"a-path",
+		"b-path",
+		"c-path",
+		"d-path",
+		"broke-path",
+	}
+}
+
+func request(c *http.Client, method, path string, headers ...string) (*http.Response, string) {
+	request,_ := http.NewRequest(method, path, nil)
+	i := 0
+	for i < len(headers) - 1 {
+		key := headers[i]
+		val := headers[i+1]
+		request.Header[key] = []string{val}
+		i += 2
+	}
+	resp,_ := c.Do(request)
+	return resp, body(resp)
 }
 
 func get(c *http.Client, path string) string {
 	resp, _ := c.Get(path)
+	return body(resp)
+}
+
+func post(c *http.Client, path string) string {
+	resp, _ := c.Post(path, "", nil)
 	return body(resp)
 }
 
@@ -146,5 +189,7 @@ func sameTable(t1 []rut.Entry, t2 []rut.Entry) bool {
 	}
 	return true
 }
+
+
 
 

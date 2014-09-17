@@ -24,6 +24,7 @@ var message = map[string]string{
 	"broke-path": "You were born",
 	"protected-path": "login required",
 	"admin-path": "must be admin",
+	"submit-path": "Submission received and trashed",
 }
 
 func home(w ht.ResponseWriter, r *ht.Request) {
@@ -64,6 +65,26 @@ func broke(w ht.ResponseWriter, r *ht.Request) {
 	panic(message["broke-path"])
 }
 
+var postSubmit = rut.Ts{
+	rut.Group(
+		rut.GET,
+		rut.H(func (w ht.ResponseWriter, r *ht.Request) {
+				fmt.Fprintln(w, "POST to submit; Need header X=123")
+			}),
+	),
+	rut.Group(
+		rut.Headers("X", "123"),
+		rut.POST,
+		rut.H(func (w ht.ResponseWriter, r *ht.Request) {
+				fmt.Fprintln(w, "submission successful")
+			}),
+	),
+}
+
+func beAdmin(r *ht.Request) {
+	context.Set(r, "admin", "yep")
+}
+
 func giveDiarrhea(r *ht.Request) {
 	context.Set(r, "hasDiarrhea", "yep")
 }
@@ -74,9 +95,7 @@ func notLoggedIn(r *ht.Request) bool {
 }
 
 func notAdmin(r *ht.Request) bool {
-	s,_ := store.Get(r, sessionName)
-	_, ok := s.Values["admin"]
-	return !ok
+	return context.Get(r, "admin") == nil
 }
 
 func catchError(handler ht.HandlerFunc) ht.HandlerFunc {
@@ -107,20 +126,27 @@ var requireAdmin = rut.Guard{
 }
 
 func routeDefinition() *rut.RouteDef {
-	return rut.SRoute(
-		"/", home, "home-path",
-		rut.SRoute("/login",  login, "login-path"),
-		rut.SRoute("/logout", logout, "logout-path"),
-		rut.SRoute("/broke",  catchError(broke), "broke-path"),
+	return rut.Route(
+		"/", rut.H(home), "home-path",
+		rut.Hooks(beAdmin),
+		rut.Guards(),
+
+		rut.SRoute("/login",  rut.H(login), "login-path"),
+		rut.SRoute("/logout", rut.H(logout), "logout-path"),
+		rut.SRoute("/broke",  rut.H(catchError(broke)), "broke-path"),
+		rut.SRoute("/submit", postSubmit, "submit-path"),
 		rut.Route(
-			"/a", a, "a-path",
+			"/a", rut.H(a), "a-path",
 			rut.Hooks(giveDiarrhea),
 			rut.Guards(requireLogin, requireAdmin),
+
 			rut.SRoute(
-				"/b", b, "b-path",
-				rut.SRoute("/c", c, "c-path"),
+				"/b", rut.H(b), "b-path",
+				rut.SRoute("/c", rut.H(c), "c-path"),
 			),
-			rut.SRoute("/d", d, "d-path"),
+			rut.SRoute(
+				"/d", rut.H(d), "d-path",
+			),
 		),
 	)
 }
@@ -129,6 +155,8 @@ func createHandler() (*mux.Router, *rut.RouteDef) {
 	root := mux.NewRouter()
 	root.StrictSlash(true)
 	def := routeDefinition()
+	root.Path("/admin").Handler(ht.HandlerFunc(c)).Methods("POST")
+
 	rut.BuildRouter(def, root)
 	return root, def
 }
@@ -137,9 +165,6 @@ func main() {
 	handler,_ := createHandler()
 	ht.ListenAndServe(":7070", handler)
 }
-
-
-
 
 
 
