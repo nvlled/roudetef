@@ -91,26 +91,38 @@ func Hooks(hooks ...Hook) []Hook {
 	return hooks
 }
 
-func Route(path string, t Transformer, name string, hooks []Hook,
+func Route(path string, t interface{}, name string, hooks []Hook,
 	guards []Guard, subroutes ...*RouteDef) *RouteDef {
-		r := &RouteDef{
-			path: path,
-			//handler: handler,
-			transformer: t,
-			name: name,
-			hooks: hooks,
-			guards: guards,
-			subroutes: subroutes,
-		}
-		for _, sub := range subroutes {
-			sub.parent = r
-		}
-		return r
+
+	var transformer Transformer
+
+	switch t := t.(type) {
+		case func(w ht.ResponseWriter, r *ht.Request):
+			transformer = H(ht.HandlerFunc(t))
+		case ht.HandlerFunc:
+			transformer = H(t)
+		case Transformer:
+			transformer = t
+	}
+
+	r := &RouteDef{
+		path: path,
+		//handler: handler,
+		transformer: transformer,
+		name: name,
+		hooks: hooks,
+		guards: guards,
+		subroutes: subroutes,
+	}
+	for _, sub := range subroutes {
+		sub.parent = r
+	}
+	return r
 }
 
-func SRoute(path string, t Transformer,
+func SRoute(path string, t interface{},
 	name string, subroutes ...*RouteDef) *RouteDef {
-	return Route(path, t, name, Hooks(), Guards(), subroutes...)
+		return Route(path, t, name, Hooks(), Guards(), subroutes...)
 }
 
 func (r *RouteDef) MapRoute(f func(r *RouteDef)) *RouteDef {

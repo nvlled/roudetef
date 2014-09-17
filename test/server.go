@@ -127,13 +127,13 @@ var requireAdmin = rut.Guard{
 
 func routeDefinition() *rut.RouteDef {
 	return rut.Route(
-		"/", rut.H(home), "home-path",
+		"/", home, "home-path",
 		rut.Hooks(beAdmin),
 		rut.Guards(),
 
-		rut.SRoute("/login",  rut.H(login), "login-path"),
-		rut.SRoute("/logout", rut.H(logout), "logout-path"),
-		rut.SRoute("/broke",  rut.H(catchError(broke)), "broke-path"),
+		rut.SRoute("/login",  login, "login-path"),
+		rut.SRoute("/logout", logout, "logout-path"),
+		rut.SRoute("/broke",  catchError(broke), "broke-path"),
 		rut.SRoute("/submit", postSubmit, "submit-path"),
 		rut.Route(
 			"/a", rut.H(a), "a-path",
@@ -141,11 +141,11 @@ func routeDefinition() *rut.RouteDef {
 			rut.Guards(requireLogin, requireAdmin),
 
 			rut.SRoute(
-				"/b", rut.H(b), "b-path",
-				rut.SRoute("/c", rut.H(c), "c-path"),
+				"/b", b, "b-path",
+				rut.SRoute("/c", c, "c-path"),
 			),
 			rut.SRoute(
-				"/d", rut.H(d), "d-path",
+				"/d", d, "d-path",
 			),
 		),
 	)
