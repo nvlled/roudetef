@@ -12,6 +12,9 @@ import (
 // TODO:
 // Abstract URL generation from mux
 // Rename MapRoute to Map
+// Move others to def subpackage
+// Use reflection to get function name when printing the routing table
+// Add accept (in addition to reject) on guards
 
 type Entry struct {
 	Name string
@@ -190,21 +193,10 @@ type TransformerFunc func(*mux.Route)
 
 type Ts []Transformer
 
-type M map[ht.Handler]Transformer
-
-
-func (m M) Transform(r *mux.Route) {
-	for handler, t := range m {
-		r.Handler(handler)
-		t.Transform(r)
-	}
-}
-
 func (ts Ts) Transform(r *mux.Route) {
 	sub := r.Subrouter()
 	sub.StrictSlash(true)
 	for _, t := range ts {
-		//sub := r.Subrouter().StrictSlash(true).Path("/")
 		t.Transform(sub.Path("/"))
 	}
 }
