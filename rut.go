@@ -15,6 +15,7 @@ import (
 // Move others to def subpackage
 // Use reflection to get function name when printing the routing table
 // Add accept (in addition to reject) on guards
+// Interchange order of route name and transformer arguments
 
 type Entry struct {
 	Name string
@@ -41,6 +42,12 @@ type RouteDef struct {
 
 func (r *RouteDef) Name() string {
 	return r.name
+}
+
+func (r *RouteDef) AddTransformer(t Transformer) Transformer {
+	t2 := Group(r.transformer, t)
+	r.transformer = t2
+	return t2
 }
 
 func Attach(r *mux.Route, hook Hook) {
