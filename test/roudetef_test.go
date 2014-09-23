@@ -3,7 +3,7 @@ package main
 
 import (
 	"net/http"
-	"nvlled/rut"
+	def "nvlled/roudetef"
 	//"fmt"
 	"testing"
 	"net/http/httptest"
@@ -16,18 +16,18 @@ import (
 )
 
 func TestPaths(t *testing.T) {
-	def := routeDefinition()
-	table := def.Table()
-	expected := []rut.Entry{
-		rut.Entry{"home-path",		"/"},
-		rut.Entry{"login-path",		"/login"},
-		rut.Entry{"logout-path",	"/logout"},
-		rut.Entry{"broke-path",		"/broke"},
-		rut.Entry{"submit-path",	"/submit"},
-		rut.Entry{"a-path",			"/a"},
-		rut.Entry{"b-path",			"/a/b"},
-		rut.Entry{"c-path",			"/a/b/c"},
-		rut.Entry{"d-path",			"/a/d"},
+	routeDef := routeDefinition()
+	table := routeDef.Table()
+	expected := []def.Entry{
+		def.Entry{"home-path",		"/"},
+		def.Entry{"login-path",		"/login"},
+		def.Entry{"logout-path",	"/logout"},
+		def.Entry{"broke-path",		"/broke"},
+		def.Entry{"submit-path",	"/submit"},
+		def.Entry{"a-path",			"/a"},
+		def.Entry{"b-path",			"/a/b"},
+		def.Entry{"c-path",			"/a/b/c"},
+		def.Entry{"d-path",			"/a/d"},
 	}
 	if !sameTable(table, expected) {
 		t.Fail()
@@ -38,7 +38,7 @@ func TestHook(t *testing.T) {
 	root, _ := createHandler()
 
 	var hooked bool
-	rut.Attach(root.Get("a-path"), func(_ *http.Request) {
+	def.Attach(root.Get("a-path"), func(_ *http.Request) {
 		hooked = true
 	})
 
@@ -133,7 +133,7 @@ func TestRequest(t *testing.T) {
 	}
 }
 
-func routeNames(def *rut.RouteDef) []string {
+func routeNames(def *def.RouteDef) []string {
 	return []string{
 		"home-path",
 		"a-path",
@@ -178,7 +178,7 @@ func createClient() *http.Client {
 	return c
 }
 
-func sameTable(t1 []rut.Entry, t2 []rut.Entry) bool {
+func sameTable(t1 []def.Entry, t2 []def.Entry) bool {
 	if len(t1) != len(t2) {
 		return false
 	}

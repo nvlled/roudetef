@@ -3,7 +3,7 @@ package main
 
 import (
 	ht "net/http"
-	"nvlled/rut"
+	def "nvlled/roudetef"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
 	"github.com/gorilla/context"
@@ -65,17 +65,17 @@ func broke(w ht.ResponseWriter, r *ht.Request) {
 	panic(message["broke-path"])
 }
 
-var postSubmit = rut.Ts{
-	rut.Group(
-		rut.GET,
-		rut.H(func (w ht.ResponseWriter, r *ht.Request) {
+var postSubmit = def.Ts{
+	def.Group(
+		def.GET,
+		def.H(func (w ht.ResponseWriter, r *ht.Request) {
 				fmt.Fprintln(w, "POST to submit; Need header X=123")
 			}),
 	),
-	rut.Group(
-		rut.Headers("X", "123"),
-		rut.POST,
-		rut.H(func (w ht.ResponseWriter, r *ht.Request) {
+	def.Group(
+		def.Headers("X", "123"),
+		def.POST,
+		def.H(func (w ht.ResponseWriter, r *ht.Request) {
 				fmt.Fprintln(w, "submission successful")
 			}),
 	),
@@ -109,7 +109,7 @@ func catchError(handler ht.HandlerFunc) ht.HandlerFunc {
 	}
 }
 
-var requireLogin = rut.Guard{
+var requireLogin = def.Guard{
 	Reject: notLoggedIn,
 	Handler: func(w ht.ResponseWriter, r *ht.Request) {
 		w.WriteHeader(ht.StatusUnauthorized)
@@ -117,7 +117,7 @@ var requireLogin = rut.Guard{
 	},
 }
 
-var requireAdmin = rut.Guard{
+var requireAdmin = def.Guard{
 	Reject: notAdmin,
 	Handler: func(w ht.ResponseWriter, r *ht.Request) {
 		w.WriteHeader(ht.StatusUnauthorized)
@@ -125,40 +125,40 @@ var requireAdmin = rut.Guard{
 	},
 }
 
-func routeDefinition() *rut.RouteDef {
-	return rut.Route(
+func routeDefinition() *def.RouteDef {
+	return def.Route(
 		"/", home, "home-path",
-		rut.Hooks(beAdmin),
-		rut.Guards(),
+		def.Hooks(beAdmin),
+		def.Guards(),
 
-		rut.SRoute("/login",  login, "login-path"),
-		rut.SRoute("/logout", logout, "logout-path"),
-		rut.SRoute("/broke",  catchError(broke), "broke-path"),
-		rut.SRoute("/submit", postSubmit, "submit-path"),
-		rut.Route(
-			"/a", rut.H(a), "a-path",
-			rut.Hooks(giveDiarrhea),
-			rut.Guards(requireLogin, requireAdmin),
+		def.SRoute("/login",  login, "login-path"),
+		def.SRoute("/logout", logout, "logout-path"),
+		def.SRoute("/broke",  catchError(broke), "broke-path"),
+		def.SRoute("/submit", postSubmit, "submit-path"),
+		def.Route(
+			"/a", def.H(a), "a-path",
+			def.Hooks(giveDiarrhea),
+			def.Guards(requireLogin, requireAdmin),
 
-			rut.SRoute(
+			def.SRoute(
 				"/b", b, "b-path",
-				rut.SRoute("/c", c, "c-path"),
+				def.SRoute("/c", c, "c-path"),
 			),
-			rut.SRoute(
+			def.SRoute(
 				"/d", d, "d-path",
 			),
 		),
 	)
 }
 
-func createHandler() (*mux.Router, *rut.RouteDef) {
+func createHandler() (*mux.Router, *def.RouteDef) {
 	root := mux.NewRouter()
 	root.StrictSlash(true)
-	def := routeDefinition()
+	routeDef := routeDefinition()
 	root.Path("/admin").Handler(ht.HandlerFunc(c)).Methods("POST")
 
-	rut.BuildRouter(def, root)
-	return root, def
+	def.BuildRouter(routeDef, root)
+	return root, routeDef
 }
 
 func main() {
