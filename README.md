@@ -46,12 +46,23 @@ then SRoute can be used instead, which is a function
 that is similar to Route but doesn't take hooks and guards:
 ```SRoute(path, handler, routeName, subroutes...)```
 
+The routeDef above results to:
+```
+home-path      	/
+login-path     	/login
+logout-path    	/logout
+submit-path    	/submit
+a-path         	/a
+b-path         	/a/b
+c-path         	/a/b/c
+d-path         	/a/d
+```
 (See [sample file](sample/main.go))
 
 
 ### Building the routes
 After  the routes have been defined, the routes can be built by
-invoking the method BuildReouter():
+invoking the method BuildRouter():
 ```go
 router := routeDef.BuildRouter()
 ```
@@ -120,8 +131,6 @@ def.SRoute(
 ```
 In the code above, sample Handler will only execute when guards A, B and C
 accept the request. The order of execution of guards is from left to right.
-
-
 
 
 
