@@ -20,6 +20,8 @@ func TestPaths(t *testing.T) {
 	table := routeDef.Table()
 	expected := []def.Entry{
 		def.Entry{"home-path",		"/"},
+		def.Entry{"sudo-path",		"/sudo"},
+		def.Entry{"admin-path",		"/admin"},
 		def.Entry{"login-path",		"/login"},
 		def.Entry{"logout-path",	"/logout"},
 		def.Entry{"broke-path",		"/broke"},
@@ -29,6 +31,7 @@ func TestPaths(t *testing.T) {
 		def.Entry{"c-path",			"/a/b/c"},
 		def.Entry{"d-path",			"/a/d"},
 	}
+	routeDef.Print()
 	if !sameTable(table, expected) {
 		t.Fail()
 	}
@@ -140,7 +143,6 @@ func routeNames(def *def.RouteDef) []string {
 		"b-path",
 		"c-path",
 		"d-path",
-		"broke-path",
 	}
 }
 
