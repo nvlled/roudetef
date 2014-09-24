@@ -1,7 +1,7 @@
 roudetef
 ========
 
-A route definition library built on top of gorilla's mux.
+A route definition library built on top of [gorilla's mux](http://www.gorillatoolkit.org/pkg/mux).
 
 ## Installation
 ```
@@ -44,6 +44,7 @@ routeDef := def.SRoute(
 If there aren't any hooks or guards for a subroute,
 then SRoute can be used instead, which is a function
 that is similar to Route but doesn't take hooks and guards:
+
 ```SRoute(path, handler, routeName, subroutes...)```
 
 The routeDef above results to:
@@ -71,10 +72,10 @@ BuildRouter() returns a [*mux.Router](http://www.gorillatoolkit.org/pkg/mux#Rout
 which means the routes can be further modified as needed.
 
 ### Serving http
-If you are not familiar with mux, you can use the router (which implements
-the [http.Handler](http://golang.org/pkg/net/http/#Handler)) as an http handler:
+If you are not familiar with mux, you can use the resulting router (which implements
+the [http.Handler](http://golang.org/pkg/net/http/#Handler)) from Buildrouter() as an http handler:
 ```
-http.ListenAndServe(":8080", router)
+http.ListenAndServe(":8080", routeDef.BuildRouter())
 ```
 
 ## Advanced usages
@@ -133,7 +134,33 @@ In the code above, sample Handler will only execute when guards A, B and C
 accept the request. The order of execution of guards is from left to right.
 
 
+### Transformers
+Previously, the Route function was stated to have a signature
+```Route(path, handler, routeName, hooks, guards, subroutes...)```
+To be precise, handler can be a type of [http.Handler](http://golang.org/pkg/net/http/#Handler)
+or a roudetef.Transformer.
 
+Simply put, transformers add matchers to each [mux.Route](http://www.gorillatoolkit.org/pkg/mux#Route)
+in the route definition. To make things more concrete, suppose a route is being defined as follows:
+```
+GET  / loginPageHandler
+POST / loginSubmitHandler
+```
+The defintion can be translated into code as follows:
+```
+group, GET, POST := def.Group, def.GET, def.POST
+...
+def.Route("/login", group(GET,  def.H(loginPageHandler)),   "login-page"),
+def.Route("/login", group(POST, def.H(loginSubmitHandler)), "login-submit"),
+...
+```
+The Group function is just a combinator for grouping transformers. GET and POST are transformers
+that call [mux.Route.Methods](http://www.gorillatoolkit.org/pkg/mux#Route.Methods) internally.
+The def.H function casts a http.Handler into a transformer that calls 
+[mux.Route.Handler](http://www.gorillatoolkit.org/pkg/mux#Route.Handler) internally.
+
+There are more transformers that wraps around mux Matcher functions,
+such as Headers and Schemes.
 
 
 
