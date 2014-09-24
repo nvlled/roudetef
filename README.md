@@ -9,11 +9,13 @@ go get https://github.com/nvlled/roudetef
 ```
 
 ## Usage
+
+### Defining the routes
 Routes can be simply defined using Route, which is
 a function that takes 5 arguments and optional subroutes:
-    Route(path, handler, routeName, hooks, guards, subroutes...)
+```Route(path, handler, routeName, hooks, guards, subroutes...)```
 
-```
+```go
 import def "net/http"
 
 ...
@@ -42,9 +44,27 @@ routeDef := def.SRoute(
 If there aren't any hooks or guards for a subroute,
 then SRoute can be used instead, which is a function
 that is similar to Route but doesn't take hooks and guards:
-    SRoute(path, handler, routeName, subroutes...)
+```SRoute(path, handler, routeName, subroutes...)```
 
-See [sample file](sample/main.go)
+(See [sample file](sample/main.go))
+
+
+### Building the routes
+After  the routes have been defined, the routes can be built by
+invoking the method BuildReouter():
+```go
+router := routeDef.BuildRouter()
+```
+
+BuildRouter() returns a [*mux.Router](http://www.gorillatoolkit.org/pkg/mux#Router),
+which means the routes can be further modified as needed.
+
+### Serving http
+If you are not familiar with mux, you can use the router (which implements
+the [http.Handler](http://golang.org/pkg/net/http/#Handler)) as an http handler:
+```
+http.ListenAndServe(":8080", router)
+```
 
 
 
