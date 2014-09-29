@@ -6,7 +6,6 @@ import (
 	def "github.com/nvlled/roudetef"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
-	//"github.com/gorilla/context"
 	"fmt"
 	"log"
 )

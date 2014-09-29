@@ -10,7 +10,6 @@ import (
 )
 
 // TODO:
-// Abstract URL generation from mux
 // Rename MapRoute to Map
 // Move others to def subpackage
 // Use reflection to get function name when printing the routing table
@@ -60,27 +59,13 @@ func Attach(r *mux.Route, hook Hook) {
 func Ward(r *mux.Route, guard Guard) {
 	r.MatcherFunc(func(r *ht.Request, m *mux.RouteMatch) bool {
 		if guard.Reject(r) {
-
 			//suppose path have Guards(requireLogin, requireAdmin)
 			// problem: requireAdmin takes priority
 			// requireLogin should be done first
-
 			// solution: reverse the order or guards when Guards(...) is called
 			// subproblem: all guards are needlessly checked
-
-			// solution2: type assertion
-
-			// where to put state....
-
-			// handler is already set to the normal handler
 			m.Handler = guard.Handler
 
-			//if m.Handler == nil {
-			//	m.Handler = guard.Handler
-			//} else {
-			//	// note of possible performance bottleneck
-			//	m.Handler = combine(m.Handler, guard.Handler)
-			//}
 		}
 		return true
 	})
@@ -285,18 +270,6 @@ func combine(h1 ht.Handler, h2 ht.Handler) ht.Handler{
 		h2.ServeHTTP(w, r)
 	})
 }
-
-
-//var GhostGuard = Guard { Reject: false }
-
-//func Sortie(guards []Guard) Guard {
-//	var sortie Guard
-//	for _, g := range guards {
-//		combine(sortie, g)
-//	}
-//	return sortie
-//}
-
 
 
 
