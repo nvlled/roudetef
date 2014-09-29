@@ -31,7 +31,7 @@ type Hook func(req *ht.Request)
 
 type RouteDef struct {
 	path string
-	//handler ht.HandlerFunc
+	handler ht.HandlerFunc
 	transformer Transformer
 	name string // assumed to be same as the path if ommited?
 	guards []Guard
@@ -101,20 +101,21 @@ func Hooks(hooks ...Hook) []Hook {
 func Route(path string, t interface{}, name string, hooks []Hook,
 	guards []Guard, subroutes ...*RouteDef) *RouteDef {
 
+	var handler ht.HandlerFunc
 	var transformer Transformer
 
 	switch t := t.(type) {
 		case func(w ht.ResponseWriter, r *ht.Request):
-			transformer = H(ht.HandlerFunc(t))
+			handler = t
 		case ht.HandlerFunc:
-			transformer = H(t)
+			handler = t
 		case Transformer:
 			transformer = t
 	}
 
 	r := &RouteDef{
 		path: path,
-		//handler: handler,
+		handler: handler,
 		transformer: transformer,
 		name: name,
 		hooks: hooks,
@@ -161,13 +162,28 @@ func BuildRouter(routeDef *RouteDef, base *mux.Router) *mux.Router {
 		Ward(route, g)
 	}
 
-	//router.Handle("/", routeDef.handler)
-	router := route.Subrouter()
-	t := routeDef.transformer
-	t.Transform(router.Path("/"))
+	if routeDef.handler != nil {
+		route.HandlerFunc(routeDef.handler)
+	}
 
-	for _, subroute := range  routeDef.subroutes {
-		BuildRouter(subroute, router)
+	t := routeDef.transformer
+	if t != nil {
+		t.Transform(route)
+	}
+
+	subroutes := routeDef.subroutes
+	if len(subroutes) > 0 {
+		// The handler func for a path prefix
+		// fails when subrouter is called.
+		// Call subrouter() only when there are no
+		// subroutes.
+		router := route.Subrouter()
+		if routeDef.handler != nil {
+			router.HandleFunc("/", routeDef.handler)
+		}
+		for _, subroute := range routeDef.subroutes {
+			BuildRouter(subroute, router)
+		}
 	}
 	return base
 }
