@@ -3,7 +3,7 @@ package main
 
 import (
 	"net/http"
-	def "nvlled/roudetef"
+	def "github.com/nvlled/roudetef"
 	//"fmt"
 	"testing"
 	"net/http/httptest"

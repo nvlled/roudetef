@@ -3,7 +3,7 @@ package main
 
 import (
 	ht "net/http"
-	def "nvlled/roudetef"
+	def "github.com/nvlled/roudetef"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
 	//"github.com/gorilla/context"
