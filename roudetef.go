@@ -268,12 +268,6 @@ func Headers(pairs ...string) Transformer {
 	})
 }
 
-func Methods(methods ...string) Transformer {
-       return TransformerFunc(func(r *mux.Route) {
-               r.Methods(methods...)
-       })
-}
-
 func Group(transformers ...Transformer) Transformer {
 	var ts []Transformer
 	for _, t := range transformers {
@@ -290,8 +284,19 @@ func Group(transformers ...Transformer) Transformer {
 	return f
 }
 
-var GET = TransformerFunc(func(r *mux.Route) {  r.Methods("GET") })
-var POST = TransformerFunc(func(r *mux.Route) { r.Methods("POST") })
+func Methods(methods ...string) func(string)pathod {
+	return func(path string) pathod {
+		return pathod{
+			path: path,
+			methods: methods,
+		}
+	}
+}
+
+var GET = Methods("GET")
+var POST = Methods("POST")
+var HEAD = Methods("HEAD")
+//...I'll add the others later
 
 func combine(h1 ht.Handler, h2 ht.Handler) ht.Handler{
 	if h1 == nil { return h2 }
