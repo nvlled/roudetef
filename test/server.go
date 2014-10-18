@@ -97,22 +97,6 @@ func admin(w ht.ResponseWriter, r *ht.Request) {
 	fmt.Fprint(w, message["admin-path"])
 }
 
-var postSubmit = def.Ts{
-	def.Group(
-		def.GET,
-		def.H(func (w ht.ResponseWriter, r *ht.Request) {
-				fmt.Fprintln(w, "POST to submit; Need header X=123")
-			}),
-	),
-	def.Group(
-		def.Headers("X", "123"),
-		def.POST,
-		def.H(func (w ht.ResponseWriter, r *ht.Request) {
-				fmt.Fprintln(w, "submission successful")
-			}),
-	),
-}
-
 func notLoggedIn(r *ht.Request) bool {
 	s,_ := store.Get(r, sessionName)
 	return s.Values["username"] == nil
@@ -165,7 +149,6 @@ var requireDiarrhea = def.Guard{
 	},
 }
 
-
 func routeDefinition() *def.RouteDef {
 	return def.SRoute(
 		"/", home, "home-path",
@@ -182,7 +165,25 @@ func routeDefinition() *def.RouteDef {
 		def.SRoute("/login",  login, "login-path"),
 		def.SRoute("/logout", logout, "logout-path"),
 		def.SRoute("/broke",  catchError(broke), "broke-path"),
-		def.SRoute("/submit", postSubmit, "submit-path"),
+
+		def.SRoute(
+			def.GET("/submit"),
+			func (w ht.ResponseWriter, r *ht.Request) {
+				fmt.Fprintln(w, "POST to submit; Need header X=123")
+			},
+			"submit-get",
+		),
+		def.SRoute(
+			def.POST("/submit"),
+			def.Group(
+				def.Headers("X", "123"),
+				def.H(func (w ht.ResponseWriter, r *ht.Request) {
+					fmt.Fprintln(w, "submission successful")
+				}),
+			),
+			"submit-post",
+		),
+
 		def.Route(
 			"/a", a, "a-path",
 			def.Hooks(),
@@ -216,4 +217,6 @@ func main() {
 	log.Println("Server listening at ", port)
 	ht.ListenAndServe(":"+port, handler)
 }
+
+
 

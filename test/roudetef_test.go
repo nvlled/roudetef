@@ -19,17 +19,18 @@ func TestPaths(t *testing.T) {
 	routeDef := routeDefinition()
 	table := routeDef.Table()
 	expected := []def.Entry{
-		def.Entry{"home-path",		"/"},
-		def.Entry{"sudo-path",		"/sudo"},
-		def.Entry{"admin-path",		"/admin"},
-		def.Entry{"login-path",		"/login"},
-		def.Entry{"logout-path",	"/logout"},
-		def.Entry{"broke-path",		"/broke"},
-		def.Entry{"submit-path",	"/submit"},
-		def.Entry{"a-path",			"/a"},
-		def.Entry{"b-path",			"/a/b"},
-		def.Entry{"c-path",			"/a/b/c"},
-		def.Entry{"d-path",			"/a/d"},
+		def.Entry{"home-path",		"/",	   "ANY"},
+		def.Entry{"sudo-path",		"/sudo",   "ANY"},
+		def.Entry{"admin-path",		"/admin",  "ANY"},
+		def.Entry{"login-path",		"/login",  "ANY"},
+		def.Entry{"logout-path",	"/logout", "ANY"},
+		def.Entry{"broke-path",		"/broke",  "ANY"},
+		def.Entry{"submit-get",		"/submit", "GET"},
+		def.Entry{"submit-post",	"/submit", "POST"},
+		def.Entry{"a-path",		"/a",      "ANY"},
+		def.Entry{"b-path",		"/a/b",    "ANY"},
+		def.Entry{"c-path",		"/a/b/c",  "ANY"},
+		def.Entry{"d-path",		"/a/d",    "ANY"},
 	}
 	routeDef.Print()
 	if !sameTable(table, expected) {
