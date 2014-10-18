@@ -100,13 +100,16 @@ func Route(path string, t interface{}, name string, hooks []Hook,
 
 	r := &RouteDef{
 		path: path,
-		handler: handler,
-		transformer: transformer,
+		//handler: handler,
+		//transformer: transformer,
 		name: name,
 		hooks: hooks,
 		guards: guards,
 		subroutes: subroutes,
 	}
+	if handler != nil { r.handler = handler }
+	if transformer != nil { r.transformer = transformer }
+
 	for _, sub := range subroutes {
 		sub.parent = r
 	}
@@ -250,9 +253,15 @@ func Methods(methods ...string) Transformer {
 }
 
 func Group(transformers ...Transformer) Transformer {
+	var ts []Transformer
+	for _, t := range transformers {
+		if t == nil { continue }
+		ts = append(ts, t)
+	}
+
 	var f TransformerFunc
 	f = func(r *mux.Route) {
-		for _, t := range transformers {
+		for _, t := range ts {
 			t.Transform(r)
 		}
 	}
