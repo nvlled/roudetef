@@ -139,7 +139,7 @@ func SRoute(path interface{}, t interface{},
 		return Route(path, t, name, Hooks(), Guards(), subroutes...)
 }
 
-func (r *RouteDef) MapRoute(f func(r *RouteDef)) *RouteDef {
+func (r *RouteDef) Map(f func(r *RouteDef)) *RouteDef {
 	return MapRoute(r, f)
 }
 
@@ -210,7 +210,7 @@ func (r *RouteDef) FullPath() string {
 
 func(r *RouteDef) String() string {
 	var lines []string
-	r.MapRoute(func(sub *RouteDef) {
+	r.Map(func(sub *RouteDef) {
 		var ms string
 		if sub.methods == nil {
 			ms = "ANY"
@@ -225,7 +225,7 @@ func(r *RouteDef) String() string {
 
 func(r *RouteDef) Table() []Entry {
 	var table []Entry
-	r.MapRoute(func(sub *RouteDef) {
+	r.Map(func(sub *RouteDef) {
 		entry := Entry{sub.name, sub.FullPath()}
 		table = append(table, entry)
 	})
