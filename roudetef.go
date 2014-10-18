@@ -26,10 +26,16 @@ type Guard struct {
 	Handler ht.HandlerFunc
 }
 
+type pathod struct {
+	path string
+	methods []string
+}
+
 type Hook func(req *ht.Request)
 
 type RouteDef struct {
 	path string
+	methods []string
 	handler ht.HandlerFunc
 	transformer Transformer
 	name string // assumed to be same as the path if ommited?
@@ -83,11 +89,22 @@ func Hooks(hooks ...Hook) []Hook {
 	return hooks
 }
 
-func Route(path string, t interface{}, name string, hooks []Hook,
+func Route(pathmethod interface{}, t interface{}, name string, hooks []Hook,
 	guards []Guard, subroutes ...*RouteDef) *RouteDef {
 
 	var handler ht.HandlerFunc
 	var transformer Transformer
+
+	var path string
+	var methods []string
+
+	switch t := pathmethod.(type) {
+		case string: path = t
+		case pathod: {
+			path = t.path
+			methods = t.methods
+		}
+	}
 
 	switch t := t.(type) {
 		case func(w ht.ResponseWriter, r *ht.Request):
@@ -100,6 +117,7 @@ func Route(path string, t interface{}, name string, hooks []Hook,
 
 	r := &RouteDef{
 		path: path,
+		methods: methods,
 		//handler: handler,
 		//transformer: transformer,
 		name: name,
@@ -152,6 +170,10 @@ func BuildRouter(routeDef *RouteDef, base *mux.Router) *mux.Router {
 
 	if routeDef.handler != nil {
 		route.HandlerFunc(routeDef.handler)
+	}
+
+	if routeDef.methods != nil {
+		route.Methods(routeDef.methods...)
 	}
 
 	t := routeDef.transformer
@@ -247,9 +269,9 @@ func Headers(pairs ...string) Transformer {
 }
 
 func Methods(methods ...string) Transformer {
-	return TransformerFunc(func(r *mux.Route) {
-		r.Methods(methods...)
-	})
+       return TransformerFunc(func(r *mux.Route) {
+               r.Methods(methods...)
+       })
 }
 
 func Group(transformers ...Transformer) Transformer {
@@ -279,6 +301,5 @@ func combine(h1 ht.Handler, h2 ht.Handler) ht.Handler{
 		h2.ServeHTTP(w, r)
 	})
 }
-
 
 
