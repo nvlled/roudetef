@@ -10,9 +10,6 @@ import (
 )
 
 // TODO:
-// Rename MapRoute to Map
-// Move others to def subpackage
-// Use reflection to get function name when printing the routing table
 // Add accept (in addition to reject) on guards
 // Interchange order of route name and transformer arguments
 // Remove API leaks
@@ -21,6 +18,7 @@ import (
 type Entry struct {
 	Name string
 	Path string
+	Methods string
 }
 
 type Guard struct {
@@ -211,12 +209,7 @@ func (r *RouteDef) FullPath() string {
 func(r *RouteDef) String() string {
 	var lines []string
 	r.Map(func(sub *RouteDef) {
-		var ms string
-		if sub.methods == nil {
-			ms = "ANY"
-		} else {
-			ms = strings.Join(sub.methods, ",")
-		}
+		ms := stringMethods(sub.methods)
 		line := fmt.Sprintf("%-15v\t%v\t%s", sub.name, sub.FullPath(), ms)
 		lines = append(lines, line)
 	})
@@ -226,7 +219,7 @@ func(r *RouteDef) String() string {
 func(r *RouteDef) Table() []Entry {
 	var table []Entry
 	r.Map(func(sub *RouteDef) {
-		entry := Entry{sub.name, sub.FullPath()}
+		entry := Entry{sub.name, sub.FullPath(), stringMethods(sub.methods)}
 		table = append(table, entry)
 	})
 	return table
@@ -305,6 +298,10 @@ var HEAD = Methods("HEAD")
 //...I'll add the others later
 
 
-
-
+func stringMethods(methods []string) string {
+	if methods == nil {
+		return "ANY"
+	}
+	return strings.Join(methods, ",")
+}
 
