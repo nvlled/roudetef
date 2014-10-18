@@ -20,20 +20,21 @@ func main() {
 	routeDef := def.SRoute(
 		"/", home, "home-path",
 
-		def.SRoute("/login",  login, "login-path"),
+		def.SRoute(def.GET("/login"),  login, "login-page"),
+		def.SRoute(def.POST("/login"),  login, "login-submit"),
 		def.SRoute("/logout", logout, "logout-path"),
-		def.SRoute("/submit", submit, "submit-path"),
+		def.SRoute(def.POST("/submit"), submit, "submit-path"),
 		def.Route(
 			"/a", def.H(a), "a-path",
 			def.Hooks(logSomething),
 			def.Guards(requireLogin),
 
 			def.SRoute(
-				"/b", b, "b-path",
+				def.GET("/b"), b, "b-path",
 				def.SRoute("/c", c, "c-path"),
 			),
 			def.SRoute(
-				"/d", d, "d-path",
+				def.Methods("HEAD", "PUT")("/d"), d, "d-path",
 			),
 		),
 	)
@@ -58,7 +59,6 @@ func aHandler(w http.ResponseWriter, h *http.Request) {
 func aHook(h *http.Request) {
 	// do something
 }
-
 
 
 
