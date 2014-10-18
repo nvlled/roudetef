@@ -120,8 +120,6 @@ func Route(pathmethod interface{}, t interface{}, name string, hooks []Hook,
 	r := &RouteDef{
 		path: path,
 		methods: methods,
-		//handler: handler,
-		//transformer: transformer,
 		name: name,
 		hooks: hooks,
 		guards: guards,
@@ -306,13 +304,7 @@ var POST = Methods("POST")
 var HEAD = Methods("HEAD")
 //...I'll add the others later
 
-func combine(h1 ht.Handler, h2 ht.Handler) ht.Handler{
-	if h1 == nil { return h2 }
-	if h2 == nil { return h1 }
-	return ht.HandlerFunc(func(w ht.ResponseWriter, r *ht.Request) {
-		h1.ServeHTTP(w, r)
-		h2.ServeHTTP(w, r)
-	})
-}
+
+
 
 
