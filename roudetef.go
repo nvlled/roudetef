@@ -15,6 +15,8 @@ import (
 // Use reflection to get function name when printing the routing table
 // Add accept (in addition to reject) on guards
 // Interchange order of route name and transformer arguments
+// Remove API leaks
+// Allow route def serialization
 
 type Entry struct {
 	Name string
@@ -134,7 +136,7 @@ func Route(pathmethod interface{}, t interface{}, name string, hooks []Hook,
 	return r
 }
 
-func SRoute(path string, t interface{},
+func SRoute(path interface{}, t interface{},
 	name string, subroutes ...*RouteDef) *RouteDef {
 		return Route(path, t, name, Hooks(), Guards(), subroutes...)
 }
@@ -211,7 +213,13 @@ func (r *RouteDef) FullPath() string {
 func(r *RouteDef) String() string {
 	var lines []string
 	r.MapRoute(func(sub *RouteDef) {
-		line := fmt.Sprintf("%-15v\t%v", sub.name, sub.FullPath())
+		var ms string
+		if sub.methods == nil {
+			ms = "ANY"
+		} else {
+			ms = strings.Join(sub.methods, ",")
+		}
+		line := fmt.Sprintf("%-15v\t%v\t%s", sub.name, sub.FullPath(), ms)
 		lines = append(lines, line)
 	})
 	return strings.Join(lines, "\n")
