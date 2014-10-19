@@ -62,27 +62,20 @@ func Attach(r *mux.Route, hook Hook) {
 	})
 }
 
-func Ward(r *mux.Route, guard Guard) {
+func Ward(r *mux.Route, guards ...Guard) {
 	r.MatcherFunc(func(r *ht.Request, m *mux.RouteMatch) bool {
-		if guard.Reject(r) {
-			//suppose path have Guards(requireLogin, requireAdmin)
-			// problem: requireAdmin takes priority
-			// requireLogin should be done first
-			// solution: reverse the order or guards when Guards(...) is called
-			// subproblem: all guards are needlessly checked
-			m.Handler = guard.Handler
-
+		for _, g := range guards {
+			if g.Reject(r) {
+				m.Handler = g.Handler
+				break
+			}
 		}
 		return true
 	})
 }
 
 func Guards(guards ...Guard) []Guard {
-	var reversed []Guard
-	for _, g := range guards {
-		reversed = append(reversed, g)
-	}
-	return reversed
+	return guards
 }
 
 func Hooks(hooks ...Hook) []Hook {
@@ -162,9 +155,8 @@ func BuildRouter(routeDef *RouteDef, base *mux.Router) *mux.Router {
 	for _, hook := range  routeDef.hooks {
 		Attach(route, hook)
 	}
-	for _, g := range  routeDef.guards {
-		Ward(route, g)
-	}
+
+	Ward(route, routeDef.guards...)
 
 	if routeDef.handler != nil {
 		route.HandlerFunc(routeDef.handler)
@@ -304,4 +296,5 @@ func stringMethods(methods []string) string {
 	}
 	return strings.Join(methods, ",")
 }
+
 
