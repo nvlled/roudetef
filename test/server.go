@@ -175,11 +175,11 @@ func routeDefinition() *def.RouteDef {
 		),
 		def.SRoute(
 			def.POST("/submit"),
-			def.Group(
-				def.Headers("X", "123"),
-				def.H(func (w ht.ResponseWriter, r *ht.Request) {
+			def.With(
+				func (w ht.ResponseWriter, r *ht.Request) {
 					fmt.Fprintln(w, "submission successful")
-				}),
+				},
+				def.Headers("X", "123"),
 			),
 			"submit-post",
 		),
