@@ -31,6 +31,11 @@ type pathod struct {
 	methods []string
 }
 
+type HandlerT struct {
+    handler ht.HandlerFunc
+    transformer Transformer
+}
+
 type Hook func(req *ht.Request)
 
 type RouteDef struct {
@@ -82,42 +87,46 @@ func Hooks(hooks ...Hook) []Hook {
 	return hooks
 }
 
-func Route(pathmethod interface{}, t interface{}, name string, hooks []Hook,
+func Route(pathmethod interface{}, handlerT interface{}, name string, hooks []Hook,
 	guards []Guard, subroutes ...*RouteDef) *RouteDef {
-
-	var handler ht.HandlerFunc
-	var transformer Transformer
 
 	var path string
 	var methods []string
-
 	switch t := pathmethod.(type) {
 		case string: path = t
 		case pathod: {
 			path = t.path
 			methods = t.methods
 		}
+        default: panic("Invalid path argument")
 	}
 
-	switch t := t.(type) {
-		case func(w ht.ResponseWriter, r *ht.Request):
+	var handler ht.HandlerFunc
+	var transformer Transformer
+	switch t := handlerT.(type) {
+        case ht.Handler:
+            handler = func(w ht.ResponseWriter, r *ht.Request) {
+                t.ServeHTTP(w, r)
+            }
+        case func(ht.ResponseWriter, *ht.Request):
 			handler = t
-		case ht.HandlerFunc:
-			handler = t
-		case Transformer:
-			transformer = t
+		case HandlerT: {
+			handler = t.handler
+			transformer = t.transformer
+        }
+        default: panic("Invalid handlerT argument")
 	}
 
 	r := &RouteDef{
 		path: path,
 		methods: methods,
+        handler: handler,
+        transformer: transformer,
 		name: name,
 		hooks: hooks,
 		guards: guards,
 		subroutes: subroutes,
 	}
-	if handler != nil { r.handler = handler }
-	if transformer != nil { r.transformer = transformer }
 
 	for _, sub := range subroutes {
 		sub.parent = r
@@ -259,6 +268,10 @@ func Headers(pairs ...string) Transformer {
 	})
 }
 
+func With(handler ht.HandlerFunc, ts ...Transformer) HandlerT {
+    return HandlerT{ handler, Group(ts...) }
+}
+
 func Group(transformers ...Transformer) Transformer {
 	var ts []Transformer
 	for _, t := range transformers {
@@ -289,12 +302,10 @@ var POST = Methods("POST")
 var HEAD = Methods("HEAD")
 //...I'll add the others later
 
-
 func stringMethods(methods []string) string {
 	if methods == nil {
 		return "ANY"
 	}
 	return strings.Join(methods, ",")
 }
-
 
