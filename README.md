@@ -19,26 +19,26 @@ a function that takes 5 arguments and optional subroutes:
 import def "github.com/nvlled/roudetef"
 
 ...
-
 routeDef := def.SRoute(
-	"/", home, "home-path",
+    "/", home, "home-path",
 
-	def.SRoute("/login",  login, "login-path"),
-	def.SRoute("/logout", logout, "logout-path"),
-	def.SRoute("/submit", submit, "submit-path"),
-	def.Route(
-		"/a", def.H(a), "a-path",
-		def.Hooks(logSomething),
-		def.Guards(requireLogin),
+    def.SRoute(def.GET("/login"),  login, "login-page"),
+    def.SRoute(def.POST("/login"),  login, "login-submit"),
+    def.SRoute("/logout", logout, "logout-path"),
+    def.SRoute(def.POST("/submit"), submit, "submit-path"),
+    def.Route(
+        "/a", a, "a-path",
+        def.Hooks(logSomething),
+        def.Guards(requireLogin),
 
-		def.SRoute(
-			"/b", b, "b-path",
-			def.SRoute("/c", c, "c-path"),
-		),
-		def.SRoute(
-			"/d", d, "d-path",
-		),
-	),
+        def.SRoute(
+            def.GET("/b"), b, "b-path",
+            def.SRoute("/c", c, "c-path"),
+        ),
+        def.SRoute(
+            def.Methods("HEAD", "PUT")("/d"), d, "d-path",
+        ),
+    ),
 )
 ```
 If there aren't any hooks or guards for a subroute,
@@ -49,17 +49,38 @@ that is similar to Route but doesn't take hooks and guards:
 
 The routeDef above results to:
 ```
-home-path      	/
-login-path     	/login
-logout-path    	/logout
-submit-path    	/submit
-a-path         	/a
-b-path         	/a/b
-c-path         	/a/b/c
-d-path         	/a/d
+home-path      	/	    ANY
+login-page     	/login	GET
+login-submit   	/login	POST
+logout-path    	/logout	ANY
+submit-path    	/submit	POST
+a-path         	/a	    ANY
+b-path         	/a/b	GET
+c-path         	/a/b/c	ANY
+d-path         	/a/d	HEAD,PUT
 ```
 (See [sample file](sample/main.go))
 
+### Specifying the http methods
+
+Notice that the path argument to Route or SRoute
+may either be a string or an abstract
+type resulting from calls such as GET, POST, etc.
+
+Just using a string as a path argumenta can match
+any http methods.
+
+Likewise, GET("/login") and POST("/login") results
+to routes that match GET and POST methods respectively.
+
+If more than one method is desired, the function Method
+can be used, as seen in the d-path above:
+```
+def.Methods("HEAD", "PUT")("/d"), d, "d-path",
+````
+The invocation may seem odd, but it is for
+both consistency's sake and the way
+... arguments work in Go.
 
 ### Building the routes
 After  the routes have been defined, the routes can be built by
@@ -120,10 +141,10 @@ routeDef := def.SRoute(
 ```
 The handler for a route will only execute if all the guards doesn't reject the request.
 In the example above, the Reject function of requireLogin always reject the request.
-In a more realistic example (again see the [test server](test/server.go)), 
-the guard will make decisions based on the request paramter.
+In a more realistic example (again see the [test server](test/server.go)),
+the guard will make decisions based on the request parameter.
 
-Only one guard's handler may execute:
+Only one of the given guards' handler may execute:
 ```
 def.SRoute(
 	"/sample", sampleHandler, "sample-path",
@@ -134,34 +155,36 @@ In the code above, sample Handler will only execute when guards A, B and C
 accept the request. The order of execution of guards is from left to right.
 
 
-### Transformers
+### More specific routes
 Previously, the Route function was stated to have a signature
 ```Route(path, handler, routeName, hooks, guards, subroutes...)```
 To be precise, handler can be a type of [http.Handler](http://golang.org/pkg/net/http/#Handler)
-or a roudetef.Transformer.
+or a type created from With function which takes a mandatory argument of http.Handler,
+and optional transformers.
+````
+With(http.Handler, ...Transformer)
+````
 
 Simply put, transformers add matchers to each [mux.Route](http://www.gorillatoolkit.org/pkg/mux#Route)
-in the route definition. To make things more concrete, suppose a route is being defined as follows:
+in the route definition. To make things more concrete, suppose
+we want a route that matches only request with headers X=123
+and with a scheme of GOPHER (for purely whimsical purposes).
+
+The route can be defined as follows:
 ```
-GET  / loginPageHandler
-POST / loginSubmitHandler
-```
-The defintion can be translated into code as follows:
-```
-group, GET, POST := def.Group, def.GET, def.POST
+With, Headers, Schemes = def.With, def.Headers, def.Schemes
+
 ...
-def.Route("/login", group(GET,  def.H(loginPageHandler)),   "login-page"),
-def.Route("/login", group(POST, def.H(loginSubmitHandler)), "login-submit"),
+
+def.Route(
+    "/login",
+    With(loginHandler, Headers("X", "123"), Schemes("GOPHER")),
+    "login-page"
+),
 ...
 ```
-The Group function is just a combinator for grouping transformers. GET and POST are transformers
-that call [mux.Route.Methods](http://www.gorillatoolkit.org/pkg/mux#Route.Methods) internally.
-The def.H function casts a http.Handler into a transformer that calls 
-[mux.Route.Handler](http://www.gorillatoolkit.org/pkg/mux#Route.Handler) internally.
-
-There are more transformers that wraps around mux Matcher functions,
-such as Headers and Schemes.
-
-
+Headers and Schemes are transformers that call
+[mux.Route.Headers](http://www.gorillatoolkit.org/pkg/mux#Route.Methods) and
+[mux.Route.Schemes](http://www.gorillatoolkit.org/pkg/mux#Route.Methods) internally.
 
 
