@@ -38,6 +38,19 @@ func TestPaths(t *testing.T) {
 	}
 }
 
+func TestPathGeneration(t *testing.T) {
+	routeDef := routeDefinition()
+    urlfor := routeDef.CreateUrlFn()
+    for _,entry := range routeDef.Table() {
+        if url,_ := urlfor(entry.Name); url != entry.Path {
+            t.Error("wrong path for " + entry.Name + ": " + entry.Path)
+        }
+    }
+    if _,err := urlfor("x-path"); err == nil {
+        t.Error("error expected")
+    }
+}
+
 func TestHook(t *testing.T) {
 	root, _ := createHandler()
 
@@ -192,6 +205,7 @@ func sameTable(t1 []def.Entry, t2 []def.Entry) bool {
 	}
 	return true
 }
+
 
 
 

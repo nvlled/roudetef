@@ -25,7 +25,7 @@ func main() {
 		def.SRoute("/logout", logout, "logout-path"),
 		def.SRoute(def.POST("/submit"), submit, "submit-path"),
 		def.Route(
-			"/a", def.H(a), "a-path",
+			"/a", a, "a-path",
 			def.Hooks(logSomething),
 			def.Guards(requireLogin),
 
