@@ -5,7 +5,9 @@ import (
 	ht "net/http"
 	"github.com/gorilla/mux"
 	"path/filepath"
+	"errors"
 	"strings"
+	"net/url"
 	"fmt"
 )
 
@@ -147,6 +149,12 @@ func (r *RouteDef) BuildRouter(base *mux.Router) *mux.Router {
 	return BuildRouter(r, base)
 }
 
+func (r *RouteDef) BuildNewRouter() *mux.Router {
+	base := mux.NewRouter()
+	base.StrictSlash(true)
+	return BuildRouter(r, base)
+}
+
 func (r *RouteDef) Print() {
 	PrintRouteDef(r)
 }
@@ -224,6 +232,40 @@ func(r *RouteDef) Table() []Entry {
 		table = append(table, entry)
 	})
 	return table
+}
+
+func(r *RouteDef) CreateUrlFn(returnErrOpt ...bool) UrlFn {
+	routes := r.BuildNewRouter()
+	return CreateUrlFn(routes, returnErrOpt...)
+}
+
+type UrlFn func(name string, params ...string) (string, error)
+
+func CreateUrlFn(routes *mux.Router, returnErrOpt ...bool) UrlFn {
+	returnErr := true
+	if len(returnErrOpt) > 0 {
+		returnErr = returnErrOpt[0]
+	}
+
+	var __ = func(urlpath *url.URL, err error) (string, error) {
+		if err != nil {
+			if returnErr {
+				return "", err
+			}
+			// embed error in the url
+			return url.QueryEscape(fmt.Sprint("(%s)", err.Error())), nil
+		}
+		return urlpath.String(),nil
+	}
+
+	return func(name string, params ...string) (string, error) {
+		r := routes.Get(name)
+		if r != nil {
+			urlpath, err := r.URL(params...)
+			return __(urlpath, err)
+		}
+		return __(nil, errors.New("invalid route name"))
+	}
 }
 
 func PrintRouteDef(routeDef *RouteDef) {
