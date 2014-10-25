@@ -34,8 +34,8 @@ type pathod struct {
 }
 
 type HandlerT struct {
-    handler ht.HandlerFunc
-    transformer Transformer
+	handler ht.HandlerFunc
+	transformer Transformer
 }
 
 type Hook func(req *ht.Request)
@@ -100,30 +100,30 @@ func Route(pathmethod interface{}, handlerT interface{}, name string, hooks []Ho
 			path = t.path
 			methods = t.methods
 		}
-        default: panic("Invalid path argument")
+		default: panic("Invalid path argument")
 	}
 
 	var handler ht.HandlerFunc
 	var transformer Transformer
 	switch t := handlerT.(type) {
-        case ht.Handler:
-            handler = func(w ht.ResponseWriter, r *ht.Request) {
-                t.ServeHTTP(w, r)
-            }
-        case func(ht.ResponseWriter, *ht.Request):
-			handler = t
+	case ht.Handler:
+		handler = func(w ht.ResponseWriter, r *ht.Request) {
+			t.ServeHTTP(w, r)
+		}
+	case func(ht.ResponseWriter, *ht.Request):
+		handler = t
 		case HandlerT: {
 			handler = t.handler
 			transformer = t.transformer
-        }
-        default: panic("Invalid handlerT argument")
+		}
+	default: panic("Invalid handlerT argument")
 	}
 
 	r := &RouteDef{
 		path: path,
 		methods: methods,
-        handler: handler,
-        transformer: transformer,
+		handler: handler,
+		transformer: transformer,
 		name: name,
 		hooks: hooks,
 		guards: guards,
@@ -136,9 +136,9 @@ func Route(pathmethod interface{}, handlerT interface{}, name string, hooks []Ho
 	return r
 }
 
-func SRoute(path interface{}, t interface{},
+func SRoute(pathmethod interface{}, handlerT interface{},
 	name string, subroutes ...*RouteDef) *RouteDef {
-		return Route(path, t, name, Hooks(), Guards(), subroutes...)
+		return Route(pathmethod, handlerT, name, Hooks(), Guards(), subroutes...)
 }
 
 func (r *RouteDef) Map(f func(r *RouteDef)) *RouteDef {
@@ -311,7 +311,7 @@ func Headers(pairs ...string) Transformer {
 }
 
 func With(handler ht.HandlerFunc, ts ...Transformer) HandlerT {
-    return HandlerT{ handler, Group(ts...) }
+	return HandlerT{ handler, Group(ts...) }
 }
 
 func Group(transformers ...Transformer) Transformer {
@@ -350,4 +350,5 @@ func stringMethods(methods []string) string {
 	}
 	return strings.Join(methods, ",")
 }
+
 
