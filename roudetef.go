@@ -350,5 +350,3 @@ func stringMethods(methods []string) string {
 	}
 	return strings.Join(methods, ",")
 }
-
-

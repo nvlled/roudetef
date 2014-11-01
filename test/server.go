@@ -217,6 +217,3 @@ func main() {
 	log.Println("Server listening at ", port)
 	ht.ListenAndServe(":"+port, handler)
 }
-
-
-

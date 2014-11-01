@@ -59,7 +59,3 @@ func aHandler(w http.ResponseWriter, h *http.Request) {
 func aHook(h *http.Request) {
 	// do something
 }
-
-
-
-

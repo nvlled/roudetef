@@ -186,5 +186,3 @@ def.Route(
 Headers and Schemes are transformers that call
 [mux.Route.Headers](http://www.gorillatoolkit.org/pkg/mux#Route.Methods) and
 [mux.Route.Schemes](http://www.gorillatoolkit.org/pkg/mux#Route.Methods) internally.
-
-

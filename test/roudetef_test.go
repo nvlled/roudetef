@@ -205,8 +205,3 @@ func sameTable(t1 []def.Entry, t2 []def.Entry) bool {
 	}
 	return true
 }
-
-
-
-
-
