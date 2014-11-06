@@ -41,20 +41,17 @@ type HandlerT struct {
 type Hook func(req *ht.Request)
 
 type RouteDef struct {
-	path string
+	Name string
+	Path string
 	methods []string
 	handler ht.HandlerFunc
 	transformer Transformer
-	name string // assumed to be same as the path if ommited?
 	guards []Guard
 	hooks []Hook
 	subroutes []*RouteDef
 	parent *RouteDef
 }
 
-func (r *RouteDef) Name() string {
-	return r.name
-}
 
 func (r *RouteDef) AddTransformer(t Transformer) Transformer {
 	t2 := Group(r.transformer, t)
@@ -120,11 +117,11 @@ func Route(pathmethod interface{}, handlerT interface{}, name string, hooks []Ho
 	}
 
 	r := &RouteDef{
-		path: path,
+		Path: path,
 		methods: methods,
 		handler: handler,
 		transformer: transformer,
-		name: name,
+		Name: name,
 		hooks: hooks,
 		guards: guards,
 		subroutes: subroutes,
@@ -202,7 +199,8 @@ func MapRoute(r *RouteDef, f func(r RouteDef) RouteDef) *RouteDef {
 }
 
 func BuildRouter(routeDef *RouteDef, base *mux.Router) *mux.Router {
-	route := base.PathPrefix(routeDef.path).Name(routeDef.name)
+	route := base.PathPrefix(routeDef.Path).Name(routeDef.Name)
+
 	for _, hook := range  routeDef.hooks {
 		Attach(route, hook)
 	}
@@ -212,7 +210,6 @@ func BuildRouter(routeDef *RouteDef, base *mux.Router) *mux.Router {
 	if routeDef.handler != nil {
 		route.HandlerFunc(routeDef.handler)
 	}
-
 	if routeDef.methods != nil {
 		route.Methods(routeDef.methods...)
 	}
@@ -243,7 +240,7 @@ func (r *RouteDef) FullPath() string {
 	var paths []string
 	// A bit inefficient, but it'll do
 	for r != nil {
-		paths = append([]string{r.path}, paths...)
+		paths = append([]string{r.Path}, paths...)
 		r = r.parent
 	}
 	return filepath.Join(paths...)
@@ -253,7 +250,7 @@ func(r *RouteDef) String() string {
 	var lines []string
 	r.Iter(func(sub *RouteDef) {
 		ms := stringMethods(sub.methods)
-		line := fmt.Sprintf("%-15v\t%v\t%s", sub.name, sub.FullPath(), ms)
+		line := fmt.Sprintf("%-15v\t%v\t%s", sub.Name, sub.FullPath(), ms)
 		lines = append(lines, line)
 	})
 	return strings.Join(lines, "\n")
@@ -262,7 +259,7 @@ func(r *RouteDef) String() string {
 func(r *RouteDef) Table() []Entry {
 	var table []Entry
 	r.Iter(func(sub *RouteDef) {
-		entry := Entry{sub.name, sub.FullPath(), stringMethods(sub.methods)}
+		entry := Entry{sub.Name, sub.FullPath(), stringMethods(sub.methods)}
 		table = append(table, entry)
 	})
 	return table
