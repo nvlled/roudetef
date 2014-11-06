@@ -15,6 +15,47 @@ import (
 	//"path/filepath"
 )
 
+func TestMap(t *testing.T) {
+	routeDef1 := routeDefinition()
+    routeDef2 := routeDef1.Map(func(r def.RouteDef) def.RouteDef {
+        r.Name = "test-"+r.Name
+        return r
+    })
+
+    name := "test-a-path"
+    subroute := routeDef1.Search(name)
+    if subroute != nil {
+        t.Error("original route should not be modified")
+    }
+
+    subroute = routeDef2.Search("test-a-path")
+    if subroute.Name != name {
+        t.Error("wrong search route result")
+    }
+    if subroute == nil {
+        t.Error("route mapping failed")
+    }
+    if subroute.Name != name {
+        t.Error("wrong search route result")
+    }
+    subroute.Map(func(r def.RouteDef) def.RouteDef {
+        r.Name = "***"+r.Name
+        return r
+    })
+
+    subroute = routeDef1.Search("test-a-path")
+    if subroute != nil {
+        t.Error("original route should not be modified")
+    }
+    subroute = routeDef2.Search("test-a-path")
+    if subroute == nil {
+        t.Error("route mapping failed")
+    }
+    if subroute.Search("test-login-path") != nil {
+        t.Error("search should not work upstream")
+    }
+}
+
 func TestPaths(t *testing.T) {
 	routeDef := routeDefinition()
 	table := routeDef.Table()

@@ -141,7 +141,15 @@ func SRoute(pathmethod interface{}, handlerT interface{},
 		return Route(pathmethod, handlerT, name, Hooks(), Guards(), subroutes...)
 }
 
-func (r *RouteDef) Map(f func(r *RouteDef)) *RouteDef {
+func (r *RouteDef) Search(name string) *RouteDef {
+	return SearchRoute(r, name)
+}
+
+func (r *RouteDef) Iter(f func(r *RouteDef)) *RouteDef {
+	return IterRoute(r, f)
+}
+
+func (r *RouteDef) Map(f func(r RouteDef)RouteDef) *RouteDef {
 	return MapRoute(r, f)
 }
 
@@ -159,12 +167,38 @@ func (r *RouteDef) Print() {
 	PrintRouteDef(r)
 }
 
-func MapRoute(r *RouteDef, f func(r *RouteDef)) *RouteDef {
+func SearchRoute(r *RouteDef, name string) *RouteDef {
+    var result *RouteDef
+    if r.Name == name {
+        result = r
+    } else {
+        for _, sub := range r.subroutes {
+            result = SearchRoute(sub, name)
+            if result != nil {
+                 break
+            }
+        }
+    }
+	return result
+}
+
+func IterRoute(r *RouteDef, f func(r *RouteDef)) *RouteDef {
 	f(r)
 	for _, sub := range r.subroutes {
-		MapRoute(sub, f)
+		IterRoute(sub, f)
 	}
 	return r
+}
+
+func MapRoute(r *RouteDef, f func(r RouteDef) RouteDef) *RouteDef {
+    r_ := f(*r) // nil exception?
+    var subroutes []*RouteDef
+	for _, sub := range r_.subroutes {
+        sub := MapRoute(sub, f)
+		subroutes = append(subroutes, sub)
+	}
+    r_.subroutes = subroutes
+	return &r_
 }
 
 func BuildRouter(routeDef *RouteDef, base *mux.Router) *mux.Router {
@@ -217,7 +251,7 @@ func (r *RouteDef) FullPath() string {
 
 func(r *RouteDef) String() string {
 	var lines []string
-	r.Map(func(sub *RouteDef) {
+	r.Iter(func(sub *RouteDef) {
 		ms := stringMethods(sub.methods)
 		line := fmt.Sprintf("%-15v\t%v\t%s", sub.name, sub.FullPath(), ms)
 		lines = append(lines, line)
@@ -227,7 +261,7 @@ func(r *RouteDef) String() string {
 
 func(r *RouteDef) Table() []Entry {
 	var table []Entry
-	r.Map(func(sub *RouteDef) {
+	r.Iter(func(sub *RouteDef) {
 		entry := Entry{sub.name, sub.FullPath(), stringMethods(sub.methods)}
 		table = append(table, entry)
 	})
@@ -270,6 +304,14 @@ func CreateUrlFn(routes *mux.Router, returnErrOpt ...bool) UrlFn {
 
 func PrintRouteDef(routeDef *RouteDef) {
 	fmt.Println(routeDef.String())
+}
+
+func rootRoute(routeDef *RouteDef) *RouteDef {
+    root := routeDef
+    for root.parent != nil {
+        root = root.parent
+    }
+    return root
 }
 
 type Transformer interface {
