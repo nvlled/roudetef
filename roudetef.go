@@ -311,6 +311,57 @@ func rootRoute(routeDef *RouteDef) *RouteDef {
     return root
 }
 
+func expandReRoutes(base *RouteDef, routes []SubRouteDef) []*RouteDef {
+    var routes_ []*RouteDef
+    for _, r := range routes {
+        var reroute *ReRouteDef
+
+        switch t := r.(type) {
+        case *RouteDef:
+            routes_ = append(routes_, t)
+            continue
+        case *ReRouteDef:
+            reroute = t
+        }
+
+        rebase := searchRoute(reroute.destName, routes)
+
+        if rebase == nil {
+            println("route not found", reroute.destName)
+            continue
+        }
+        var temp RouteDef
+        temp = *rebase
+        temp.Path = filepath.Join(reroute.pathPrefix, temp.Path)
+
+        rebase = temp.Map(func(route RouteDef) RouteDef {
+            route.Name = reroute.namePrefix +"-"+ route.Name
+            return route
+        })
+
+        rebase.hooks  = append(rebase.hooks, reroute.hooks...)
+        rebase.guards = append(rebase.guards, reroute.guards...)
+        routes_ = append(routes_, rebase)
+    }
+    return routes_
+}
+
+func searchRoute(name string, routes []SubRouteDef) *RouteDef {
+    for _, r := range routes {
+        var routeDef *RouteDef
+
+        switch t := r.(type) {
+        case *RouteDef:
+            routeDef = t
+        default: continue
+        }
+        if routeDef.Name == name {
+            return routeDef
+        }
+    }
+    return nil
+}
+
 type Transformer interface {
 	Transform(*mux.Route)
 }
