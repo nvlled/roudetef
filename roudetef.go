@@ -17,6 +17,13 @@ import (
 // Remove API leaks
 // Allow route def serialization
 
+// code convention note:
+// Since quotes aren't allowed in identifiers,
+// _ (underscore) is used instead.
+// e.g.
+// somevar  := blah()
+// somevar_ := wah(somevar)
+
 type Entry struct {
 	Name string
 	Path string
@@ -221,6 +228,7 @@ func MapRoute(r *RouteDef, f func(r RouteDef) RouteDef) *RouteDef {
     var subroutes []*RouteDef
 	for _, sub := range r_.subroutes {
         sub := MapRoute(sub, f)
+        sub.parent = &r_
 		subroutes = append(subroutes, sub)
 	}
     r_.subroutes = subroutes
@@ -330,6 +338,7 @@ func CreateUrlFn(routes *mux.Router, returnErrOpt ...bool) UrlFn {
 
 func PrintRouteDef(routeDef *RouteDef) {
 	fmt.Println(routeDef.String())
+    fmt.Println("----------")
 }
 
 func rootRoute(routeDef *RouteDef) *RouteDef {
