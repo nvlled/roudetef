@@ -9,6 +9,7 @@ import (
 	"strings"
 	"net/url"
 	"fmt"
+    "math"
 )
 
 // TODO:
@@ -285,9 +286,17 @@ func (r *RouteDef) FullPath() string {
 
 func(r *RouteDef) String() string {
 	var lines []string
+    col1Len := 0
+    col2Len := 0
 	r.Iter(func(sub *RouteDef) {
 		ms := stringMethods(sub.methods)
-		line := fmt.Sprintf("%-15v\t%v\t%s", sub.Name, sub.FullPath(), ms)
+        col1Len = int(math.Max(float64(col1Len), float64(len(ms))))
+        col2Len = int(math.Max(float64(col2Len), float64(len(sub.FullPath()))))
+    })
+	r.Iter(func(sub *RouteDef) {
+		ms := stringMethods(sub.methods)
+        fmts := fmt.Sprintf("%%-%vv  %%-%vv %%v", col1Len, col2Len)
+		line := fmt.Sprintf(fmts, ms, sub.FullPath(), sub.Name)
 		lines = append(lines, line)
 	})
 	return strings.Join(lines, "\n")
@@ -365,7 +374,8 @@ func expandReRoutes(base *RouteDef, routes []SubRouteDef) []*RouteDef {
         rebase := searchRoute(reroute.destName, routes)
 
         if rebase == nil {
-            println("route not found", reroute.destName)
+            println("Route not found:", reroute.destName,
+                "Re-route Must be the same level as the destination.")
             continue
         }
         var temp RouteDef
