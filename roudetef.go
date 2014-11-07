@@ -48,10 +48,23 @@ type RouteDef struct {
 	transformer Transformer
 	guards []Guard
 	hooks []Hook
-	subroutes []*RouteDef
 	parent *RouteDef
+	subroutes []*RouteDef
 }
 
+type ReRouteDef struct {
+    destName string
+	pathPrefix string
+	namePrefix string
+	guards []Guard
+	hooks []Hook
+}
+
+// solution for safely emulating union/variant types
+type SubRouteDef interface { SubRouteDef() }
+
+func (r *RouteDef)   SubRouteDef() { }
+func (r *ReRouteDef) SubRouteDef() { }
 
 func (r *RouteDef) AddTransformer(t Transformer) Transformer {
 	t2 := Group(r.transformer, t)
@@ -87,7 +100,7 @@ func Hooks(hooks ...Hook) []Hook {
 }
 
 func Route(pathmethod interface{}, handlerT interface{}, name string, hooks []Hook,
-	guards []Guard, subroutes ...*RouteDef) *RouteDef {
+	guards []Guard, subroutes ...SubRouteDef) *RouteDef {
 
 	var path string
 	var methods []string
@@ -124,19 +137,35 @@ func Route(pathmethod interface{}, handlerT interface{}, name string, hooks []Ho
 		Name: name,
 		hooks: hooks,
 		guards: guards,
-		subroutes: subroutes,
 	}
+    r.subroutes = expandReRoutes(r, subroutes)
 
-	for _, sub := range subroutes {
+	for _, sub := range r.subroutes {
 		sub.parent = r
 	}
 	return r
 }
 
 func SRoute(pathmethod interface{}, handlerT interface{},
-	name string, subroutes ...*RouteDef) *RouteDef {
+	name string, subroutes ...SubRouteDef) *RouteDef {
 		return Route(pathmethod, handlerT, name, Hooks(), Guards(), subroutes...)
 }
+
+func ReRoute(pathPrefix string, namePrefix string, destName string,
+    hooks []Hook, guards []Guard) *ReRouteDef{
+        return &ReRouteDef{
+            pathPrefix : pathPrefix,
+            namePrefix : namePrefix,
+            destName   : destName,
+            hooks      : hooks,
+            guards     : guards,
+        }
+}
+
+func ReSRoute(pathPrefix string, namePrefix string, destName string) *ReRouteDef {
+    return ReRoute(pathPrefix, namePrefix, destName, Hooks(), Guards())
+}
+
 
 func (r *RouteDef) Search(name string) *RouteDef {
 	return SearchRoute(r, name)
