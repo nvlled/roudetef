@@ -15,6 +15,36 @@ import (
 	//"path/filepath"
 )
 
+func TestReRouting(t *testing.T) {
+    routeDef := def.SRoute(
+        "/", a, "home-path",
+        def.SRoute(
+            "/a", a, "a-path",
+            def.SRoute(
+                "/b", b, "b-path",
+                def.SRoute("/c", c, "c-path"),
+            ),
+            def.SRoute("/d", d, "d-path"),
+        ),
+        def.ReSRoute("/api", "json", "a-path"),
+    )
+	expected := []def.Entry{
+		def.Entry{"home-path",	    "/",	   "ANY"},
+		def.Entry{"a-path",		    "/a",      "ANY"},
+		def.Entry{"b-path",		    "/a/b",    "ANY"},
+		def.Entry{"c-path",		    "/a/b/c",  "ANY"},
+		def.Entry{"d-path",		    "/a/d",    "ANY"},
+		def.Entry{"json-a-path",    "/api/a",      "ANY"},
+		def.Entry{"json-b-path",	"/api/a/b",    "ANY"},
+		def.Entry{"json-c-path",	"/api/a/b/c",  "ANY"},
+		def.Entry{"json-d-path",	"/api/a/d",    "ANY"},
+	}
+	routeDef.Print()
+	if !sameTable(routeDef.Table(), expected) {
+		t.Error("rerouting failed")
+	}
+}
+
 func TestMap(t *testing.T) {
 	routeDef1 := routeDefinition()
     routeDef2 := routeDef1.Map(func(r def.RouteDef) def.RouteDef {
