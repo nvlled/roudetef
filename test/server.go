@@ -1,13 +1,12 @@
-
 package main
 
 import (
-	ht "net/http"
-	def "github.com/nvlled/roudetef"
+	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
-	"fmt"
+	def "github.com/nvlled/roudetef"
 	"log"
+	ht "net/http"
 )
 
 var store = sessions.NewCookieStore([]byte("supersecretpassword"))
@@ -29,17 +28,17 @@ var message = map[string]string{
 		<li><a href='/submit'>Submit personal info</a></li>
 	</ul>
 	`,
-	"login-path": "You are now alive",
-	"logout-path": "You are now dead",
-	"a-path": "This is a path. You now have diarrhea.",
-	"b-path": "This is b path",
-	"c-path": "This is c path",
-	"d-path": "This is d path",
-	"broke-path": "You were born",
+	"login-path":     "You are now alive",
+	"logout-path":    "You are now dead",
+	"a-path":         "This is a path. You now have diarrhea.",
+	"b-path":         "This is b path",
+	"c-path":         "This is c path",
+	"d-path":         "This is d path",
+	"broke-path":     "You were born",
 	"protected-path": "login required",
-	"admin-path": "localhost: ~#",
-	"submit-path": "Submission received and trashed",
-	"sudo-path": "You are now logged in as root\nlocalhost: ~# ",
+	"admin-path":     "localhost: ~#",
+	"submit-path":    "Submission received and trashed",
+	"sudo-path":      "You are now logged in as root\nlocalhost: ~# ",
 }
 
 func home(w ht.ResponseWriter, r *ht.Request) {
@@ -48,14 +47,14 @@ func home(w ht.ResponseWriter, r *ht.Request) {
 }
 
 func login(w ht.ResponseWriter, r *ht.Request) {
-	s,_ := store.Get(r, sessionName)
+	s, _ := store.Get(r, sessionName)
 	s.Values["username"] = "joe"
 	s.Save(r, w)
 	fmt.Fprint(w, message["login-path"])
 }
 
 func logout(w ht.ResponseWriter, r *ht.Request) {
-	s,_ := store.Get(r, sessionName)
+	s, _ := store.Get(r, sessionName)
 	delete(s.Values, "username")
 	delete(s.Values, "admin")
 	delete(s.Values, "hasDiarrhea")
@@ -64,7 +63,7 @@ func logout(w ht.ResponseWriter, r *ht.Request) {
 }
 
 func a(w ht.ResponseWriter, r *ht.Request) {
-	s,_ := store.Get(r, sessionName)
+	s, _ := store.Get(r, sessionName)
 	s.Values["hasDiarrhea"] = "yep"
 	s.Save(r, w)
 	fmt.Fprint(w, message["a-path"])
@@ -87,7 +86,7 @@ func broke(w ht.ResponseWriter, r *ht.Request) {
 }
 
 func sudo(w ht.ResponseWriter, r *ht.Request) {
-	s,_ := store.Get(r, sessionName)
+	s, _ := store.Get(r, sessionName)
 	s.Values["admin"] = "yep"
 	s.Save(r, w)
 	fmt.Fprint(w, message["sudo-path"])
@@ -98,17 +97,17 @@ func admin(w ht.ResponseWriter, r *ht.Request) {
 }
 
 func notLoggedIn(r *ht.Request) bool {
-	s,_ := store.Get(r, sessionName)
+	s, _ := store.Get(r, sessionName)
 	return s.Values["username"] == nil
 }
 
 func notAdmin(r *ht.Request) bool {
-	s,_ := store.Get(r, sessionName)
+	s, _ := store.Get(r, sessionName)
 	return s.Values["admin"] == nil
 }
 
 func noDiarrhea(r *ht.Request) bool {
-	s,_ := store.Get(r, sessionName)
+	s, _ := store.Get(r, sessionName)
 	return s.Values["hasDiarrhea"] == nil
 }
 
@@ -154,21 +153,21 @@ func routeDefinition() *def.RouteDef {
 		"/", home, "home-path",
 
 		def.Route(
-			"/sudo",   sudo, "sudo-path",
+			"/sudo", sudo, "sudo-path",
 			def.Hooks(), def.Guards(requireLogin),
 		),
 		def.Route(
-			"/admin",   admin, "admin-path",
+			"/admin", admin, "admin-path",
 			def.Hooks(), def.Guards(requireAdmin),
 		),
 
-		def.SRoute("/login",  login, "login-path"),
+		def.SRoute("/login", login, "login-path"),
 		def.SRoute("/logout", logout, "logout-path"),
-		def.SRoute("/broke",  catchError(broke), "broke-path"),
+		def.SRoute("/broke", catchError(broke), "broke-path"),
 
 		def.SRoute(
 			def.GET("/submit"),
-			func (w ht.ResponseWriter, r *ht.Request) {
+			func(w ht.ResponseWriter, r *ht.Request) {
 				fmt.Fprintln(w, "POST to submit; Need header X=123")
 			},
 			"submit-get",
@@ -176,7 +175,7 @@ func routeDefinition() *def.RouteDef {
 		def.SRoute(
 			def.POST("/submit"),
 			def.With(
-				func (w ht.ResponseWriter, r *ht.Request) {
+				func(w ht.ResponseWriter, r *ht.Request) {
 					fmt.Fprintln(w, "submission successful")
 				},
 				def.Headers("X", "123"),
@@ -212,7 +211,7 @@ func createHandler() (*mux.Router, *def.RouteDef) {
 }
 
 func main() {
-	handler,_ := createHandler()
+	handler, _ := createHandler()
 	port := "7070"
 	log.Println("Server listening at ", port)
 	ht.ListenAndServe(":"+port, handler)

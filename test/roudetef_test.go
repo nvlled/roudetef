@@ -1,13 +1,12 @@
-
 package main
 
 import (
-	"net/http"
 	def "github.com/nvlled/roudetef"
+	"net/http"
 	//"fmt"
-	"testing"
-	"net/http/httptest"
 	"net/http/cookiejar"
+	"net/http/httptest"
+	"testing"
 	//"github.com/gorilla/mux"
 	"io/ioutil"
 	//"fmt"
@@ -16,28 +15,28 @@ import (
 )
 
 func TestReRouting(t *testing.T) {
-    routeDef := def.SRoute(
-        "/", a, "home-path",
-        def.SRoute(
-            "/a", a, "a-path",
-            def.SRoute(
-                "/b", b, "b-path",
-                def.SRoute("/c", c, "c-path"),
-            ),
-            def.SRoute("/d", d, "d-path"),
-        ),
-        def.ReSRoute("/api", "json", "a-path"),
-    )
+	routeDef := def.SRoute(
+		"/", a, "home-path",
+		def.SRoute(
+			"/a", a, "a-path",
+			def.SRoute(
+				"/b", b, "b-path",
+				def.SRoute("/c", c, "c-path"),
+			),
+			def.SRoute("/d", d, "d-path"),
+		),
+		def.ReSRoute("/api", "json", "a-path"),
+	)
 	expected := []def.Entry{
-		def.Entry{"home-path",	    "/",	   "ANY"},
-		def.Entry{"a-path",		    "/a",      "ANY"},
-		def.Entry{"b-path",		    "/a/b",    "ANY"},
-		def.Entry{"c-path",		    "/a/b/c",  "ANY"},
-		def.Entry{"d-path",		    "/a/d",    "ANY"},
-		def.Entry{"json-a-path",    "/api/a",      "ANY"},
-		def.Entry{"json-b-path",	"/api/a/b",    "ANY"},
-		def.Entry{"json-c-path",	"/api/a/b/c",  "ANY"},
-		def.Entry{"json-d-path",	"/api/a/d",    "ANY"},
+		def.Entry{"home-path", "/", "ANY"},
+		def.Entry{"a-path", "/a", "ANY"},
+		def.Entry{"b-path", "/a/b", "ANY"},
+		def.Entry{"c-path", "/a/b/c", "ANY"},
+		def.Entry{"d-path", "/a/d", "ANY"},
+		def.Entry{"json-a-path", "/api/a", "ANY"},
+		def.Entry{"json-b-path", "/api/a/b", "ANY"},
+		def.Entry{"json-c-path", "/api/a/b/c", "ANY"},
+		def.Entry{"json-d-path", "/api/a/d", "ANY"},
 	}
 	routeDef.Print()
 	if !sameTable(routeDef.Table(), expected) {
@@ -47,61 +46,61 @@ func TestReRouting(t *testing.T) {
 
 func TestMap(t *testing.T) {
 	routeDef1 := routeDefinition()
-    routeDef2 := routeDef1.Map(func(r def.RouteDef) def.RouteDef {
-        r.Name = "test-"+r.Name
-        return r
-    })
+	routeDef2 := routeDef1.Map(func(r def.RouteDef) def.RouteDef {
+		r.Name = "test-" + r.Name
+		return r
+	})
 
-    name := "test-a-path"
-    subroute := routeDef1.Search(name)
-    if subroute != nil {
-        t.Error("original route should not be modified")
-    }
+	name := "test-a-path"
+	subroute := routeDef1.Search(name)
+	if subroute != nil {
+		t.Error("original route should not be modified")
+	}
 
-    subroute = routeDef2.Search("test-a-path")
-    if subroute.Name != name {
-        t.Error("wrong search route result")
-    }
-    if subroute == nil {
-        t.Error("route mapping failed")
-    }
-    if subroute.Name != name {
-        t.Error("wrong search route result")
-    }
-    subroute.Map(func(r def.RouteDef) def.RouteDef {
-        r.Name = "***"+r.Name
-        return r
-    })
+	subroute = routeDef2.Search("test-a-path")
+	if subroute.Name != name {
+		t.Error("wrong search route result")
+	}
+	if subroute == nil {
+		t.Error("route mapping failed")
+	}
+	if subroute.Name != name {
+		t.Error("wrong search route result")
+	}
+	subroute.Map(func(r def.RouteDef) def.RouteDef {
+		r.Name = "***" + r.Name
+		return r
+	})
 
-    subroute = routeDef1.Search("test-a-path")
-    if subroute != nil {
-        t.Error("original route should not be modified")
-    }
-    subroute = routeDef2.Search("test-a-path")
-    if subroute == nil {
-        t.Error("route mapping failed")
-    }
-    if subroute.Search("test-login-path") != nil {
-        t.Error("search should not work upstream")
-    }
+	subroute = routeDef1.Search("test-a-path")
+	if subroute != nil {
+		t.Error("original route should not be modified")
+	}
+	subroute = routeDef2.Search("test-a-path")
+	if subroute == nil {
+		t.Error("route mapping failed")
+	}
+	if subroute.Search("test-login-path") != nil {
+		t.Error("search should not work upstream")
+	}
 }
 
 func TestPaths(t *testing.T) {
 	routeDef := routeDefinition()
 	table := routeDef.Table()
 	expected := []def.Entry{
-		def.Entry{"home-path",		"/",	   "ANY"},
-		def.Entry{"sudo-path",		"/sudo",   "ANY"},
-		def.Entry{"admin-path",		"/admin",  "ANY"},
-		def.Entry{"login-path",		"/login",  "ANY"},
-		def.Entry{"logout-path",	"/logout", "ANY"},
-		def.Entry{"broke-path",		"/broke",  "ANY"},
-		def.Entry{"submit-get",		"/submit", "GET"},
-		def.Entry{"submit-post",	"/submit", "POST"},
-		def.Entry{"a-path",		"/a",      "ANY"},
-		def.Entry{"b-path",		"/a/b",    "ANY"},
-		def.Entry{"c-path",		"/a/b/c",  "ANY"},
-		def.Entry{"d-path",		"/a/d",    "ANY"},
+		def.Entry{"home-path", "/", "ANY"},
+		def.Entry{"sudo-path", "/sudo", "ANY"},
+		def.Entry{"admin-path", "/admin", "ANY"},
+		def.Entry{"login-path", "/login", "ANY"},
+		def.Entry{"logout-path", "/logout", "ANY"},
+		def.Entry{"broke-path", "/broke", "ANY"},
+		def.Entry{"submit-get", "/submit", "GET"},
+		def.Entry{"submit-post", "/submit", "POST"},
+		def.Entry{"a-path", "/a", "ANY"},
+		def.Entry{"b-path", "/a/b", "ANY"},
+		def.Entry{"c-path", "/a/b/c", "ANY"},
+		def.Entry{"d-path", "/a/d", "ANY"},
 	}
 	routeDef.Print()
 	if !sameTable(table, expected) {
@@ -111,15 +110,15 @@ func TestPaths(t *testing.T) {
 
 func TestPathGeneration(t *testing.T) {
 	routeDef := routeDefinition()
-    urlfor := routeDef.CreateUrlFn()
-    for _,entry := range routeDef.Table() {
-        if url,_ := urlfor(entry.Name); url != entry.Path {
-            t.Error("wrong path for " + entry.Name + ": " + entry.Path)
-        }
-    }
-    if _,err := urlfor("x-path"); err == nil {
-        t.Error("error expected")
-    }
+	urlfor := routeDef.CreateUrlFn()
+	for _, entry := range routeDef.Table() {
+		if url, _ := urlfor(entry.Name); url != entry.Path {
+			t.Error("wrong path for " + entry.Name + ": " + entry.Path)
+		}
+	}
+	if _, err := urlfor("x-path"); err == nil {
+		t.Error("error expected")
+	}
 }
 
 func TestHook(t *testing.T) {
@@ -131,19 +130,25 @@ func TestHook(t *testing.T) {
 	})
 
 	server := httptest.NewServer(root)
-	http.Get(server.URL+"/login")
+	http.Get(server.URL + "/login")
 
 	hooked = false
-	http.Get(server.URL+"/a/")
-	if !hooked { t.Fail() }
+	http.Get(server.URL + "/a/")
+	if !hooked {
+		t.Fail()
+	}
 
 	hooked = false
-	http.Get(server.URL+"/a/b/")
-	if !hooked { t.Fail() }
+	http.Get(server.URL + "/a/b/")
+	if !hooked {
+		t.Fail()
+	}
 
 	hooked = false
-	http.Get(server.URL+"/login")
-	if hooked { t.Fail() }
+	http.Get(server.URL + "/login")
+	if hooked {
+		t.Fail()
+	}
 }
 
 func TestGuard(t *testing.T) {
@@ -153,26 +158,42 @@ func TestGuard(t *testing.T) {
 
 	// path /a and its subpaths /a/b, /a/b/c, etc...
 	// are protected and requires a login
-	resp,_ := client.Get(server.URL+"/a")
-	if resp.StatusCode == http.StatusOK { t.Fail() }
-	resp,_ = client.Get(server.URL+"/a/b")
-	if resp.StatusCode == http.StatusOK { t.Fail() }
-	resp,_ = client.Get(server.URL+"/a/b/c")
-	if resp.StatusCode == http.StatusOK { t.Fail() }
-	resp,_ = client.Get(server.URL+"/a/d")
-	if resp.StatusCode == http.StatusOK { t.Fail() }
+	resp, _ := client.Get(server.URL + "/a")
+	if resp.StatusCode == http.StatusOK {
+		t.Fail()
+	}
+	resp, _ = client.Get(server.URL + "/a/b")
+	if resp.StatusCode == http.StatusOK {
+		t.Fail()
+	}
+	resp, _ = client.Get(server.URL + "/a/b/c")
+	if resp.StatusCode == http.StatusOK {
+		t.Fail()
+	}
+	resp, _ = client.Get(server.URL + "/a/d")
+	if resp.StatusCode == http.StatusOK {
+		t.Fail()
+	}
 
 	// super login
-	resp,_ = client.Get(server.URL+"/login")
+	resp, _ = client.Get(server.URL + "/login")
 
-	resp,_ = client.Get(server.URL+"/a")
-	if resp.StatusCode != http.StatusOK { t.Fail() }
-	resp,_ = client.Get(server.URL+"/a/b")
-	if resp.StatusCode != http.StatusOK { t.Fail() }
-	resp,_ = client.Get(server.URL+"/a/b/c")
-	if resp.StatusCode != http.StatusOK { t.Fail() }
-	resp,_ = client.Get(server.URL+"/a/d")
-	if resp.StatusCode != http.StatusOK { t.Fail() }
+	resp, _ = client.Get(server.URL + "/a")
+	if resp.StatusCode != http.StatusOK {
+		t.Fail()
+	}
+	resp, _ = client.Get(server.URL + "/a/b")
+	if resp.StatusCode != http.StatusOK {
+		t.Fail()
+	}
+	resp, _ = client.Get(server.URL + "/a/b/c")
+	if resp.StatusCode != http.StatusOK {
+		t.Fail()
+	}
+	resp, _ = client.Get(server.URL + "/a/d")
+	if resp.StatusCode != http.StatusOK {
+		t.Fail()
+	}
 
 }
 
@@ -188,10 +209,12 @@ func TestRouting(t *testing.T) {
 			continue
 		}
 
-		path,err := root.Get(name).URL()
-		if err != nil { panic(err) }
+		path, err := root.Get(name).URL()
+		if err != nil {
+			panic(err)
+		}
 
-		c.Get(base+"/login") // ensure access to all path
+		c.Get(base + "/login") // ensure access to all path
 		resp := get(c, base+path.String())
 
 		//fmt.Printf("%v: %v == %v\n", name, resp, msg)
@@ -206,16 +229,16 @@ func TestRequest(t *testing.T) {
 	server := httptest.NewServer(root)
 	c := createClient()
 
-	resp,_ := request(c, "GET",  server.URL+"/submit/")
+	resp, _ := request(c, "GET", server.URL+"/submit/")
 	if resp.StatusCode != http.StatusOK {
 		t.Fail()
 	}
-	resp,_ = request(c, "POST",  server.URL+"/submit/")
+	resp, _ = request(c, "POST", server.URL+"/submit/")
 	if resp.StatusCode == http.StatusOK {
 		t.Fail()
 	}
 	// route requires a header "X:123"
-	resp,_ = request(c, "POST",  server.URL+"/submit/", "X", "123")
+	resp, _ = request(c, "POST", server.URL+"/submit/", "X", "123")
 	if resp.StatusCode != http.StatusOK {
 		t.Fail()
 	}
@@ -232,15 +255,15 @@ func routeNames(def *def.RouteDef) []string {
 }
 
 func request(c *http.Client, method, path string, headers ...string) (*http.Response, string) {
-	request,_ := http.NewRequest(method, path, nil)
+	request, _ := http.NewRequest(method, path, nil)
 	i := 0
-	for i < len(headers) - 1 {
+	for i < len(headers)-1 {
 		key := headers[i]
 		val := headers[i+1]
 		request.Header[key] = []string{val}
 		i += 2
 	}
-	resp,_ := c.Do(request)
+	resp, _ := c.Do(request)
 	return resp, body(resp)
 }
 
@@ -255,13 +278,13 @@ func post(c *http.Client, path string) string {
 }
 
 func body(resp *http.Response) string {
-	s,_ := ioutil.ReadAll(resp.Body)
+	s, _ := ioutil.ReadAll(resp.Body)
 	return string(s)
 }
 
 func createClient() *http.Client {
 	c := new(http.Client)
-	c.Jar,_ = cookiejar.New(nil)
+	c.Jar, _ = cookiejar.New(nil)
 	return c
 }
 

@@ -1,14 +1,14 @@
 package main
 
 import (
-	"net/http"
 	def "github.com/nvlled/roudetef"
+	"net/http"
 )
 
-var home	= aHandler
-var login	= aHandler
-var logout	= aHandler
-var submit	= aHandler
+var home = aHandler
+var login = aHandler
+var logout = aHandler
+var submit = aHandler
 var a = aHandler
 var b = aHandler
 var c = aHandler
@@ -20,8 +20,8 @@ func main() {
 	routeDef := def.SRoute(
 		"/", home, "home-path",
 
-		def.SRoute(def.GET("/login"),  login, "login-page"),
-		def.SRoute(def.POST("/login"),  login, "login-submit"),
+		def.SRoute(def.GET("/login"), login, "login-page"),
+		def.SRoute(def.POST("/login"), login, "login-submit"),
 		def.SRoute("/logout", logout, "logout-path"),
 		def.SRoute(def.POST("/submit"), submit, "submit-path"),
 		def.Route(
