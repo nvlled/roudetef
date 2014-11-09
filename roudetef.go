@@ -24,6 +24,10 @@ import (
 // somevar  := blah()
 // somevar_ := wah(somevar)
 
+const (
+    REROUTE_SEP = "/"
+)
+
 type Entry struct {
 	Name    string
 	Path    string
@@ -388,7 +392,7 @@ func expandReRoutes(base *RouteDef, routes []SubRouteDef) []*RouteDef {
 		temp.Path = filepath.Join(reroute.pathPrefix, temp.Path)
 
 		rebase = temp.Map(func(route RouteDef) RouteDef {
-			route.Name = reroute.namePrefix + "-" + route.Name
+			route.Name = reroute.namePrefix + REROUTE_SEP + route.Name
 			return route
 		})
 
