@@ -33,10 +33,10 @@ func TestReRouting(t *testing.T) {
 		def.Entry{"b-path", "/a/b", "ANY"},
 		def.Entry{"c-path", "/a/b/c", "ANY"},
 		def.Entry{"d-path", "/a/d", "ANY"},
-		def.Entry{"json-a-path", "/api/a", "ANY"},
-		def.Entry{"json-b-path", "/api/a/b", "ANY"},
-		def.Entry{"json-c-path", "/api/a/b/c", "ANY"},
-		def.Entry{"json-d-path", "/api/a/d", "ANY"},
+		def.Entry{"json/a-path", "/api/a", "ANY"},
+		def.Entry{"json/b-path", "/api/a/b", "ANY"},
+		def.Entry{"json/c-path", "/api/a/b/c", "ANY"},
+		def.Entry{"json/d-path", "/api/a/d", "ANY"},
 	}
 	routeDef.Print()
 	if !sameTable(routeDef.Table(), expected) {
